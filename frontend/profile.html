@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <script>
+    document.documentElement.setAttribute('data-theme', localStorage.getItem('vt_theme') || 'dark');
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#080c10">
+  <link rel="icon" href="images/favicon.ico">
+  <title>GeoTracer — Profil</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&family=Exo+2:wght@300;400;600;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/profile.css">
+  <link rel="stylesheet" href="css/themes.css">
+</head>
+<body>
+
+<div id="sidebar"></div>
+
+<div class="main">
+  <div id="topbar"></div>
+  <div class="page-content">
+    <div class="profile-grid">
+
+      <!-- Colonne gauche : carte profil -->
+      <div>
+        <div class="profile-card">
+          <div class="profile-card-header">
+            <div class="profile-avatar" id="profileAvatar" onclick="Profile.changeAvatar()" title="Changer l'avatar" style="cursor:pointer">🚴</div>
+            <div style="font-family:var(--font-mono);font-size:9px;color:var(--text3);text-align:center;margin-top:-10px;margin-bottom:8px">Cliquer pour changer</div>
+            <input type="file" id="avatarInput" accept="image/*" style="display:none" onchange="Profile.handleAvatar()">
+            <div class="profile-name" id="profileName">—</div>
+            <div class="profile-email" id="profileEmail">—</div>
+          </div>
+          <div class="profile-stats-mini">
+            <div class="profile-stat-mini">
+              <div class="profile-stat-mini-val" id="pKpiDist">—</div>
+              <div class="profile-stat-mini-lbl">km total</div>
+            </div>
+            <div class="profile-stat-mini">
+              <div class="profile-stat-mini-val" id="pKpiRides">—</div>
+              <div class="profile-stat-mini-lbl">sorties</div>
+            </div>
+            <div class="profile-stat-mini">
+              <div class="profile-stat-mini-val" id="pKpiElev">—</div>
+              <div class="profile-stat-mini-lbl">m D+</div>
+            </div>
+            <div class="profile-stat-mini">
+              <div class="profile-stat-mini-val" id="pKpiSpeed">—</div>
+              <div class="profile-stat-mini-lbl">moy km/h</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Colonne droite : paramètres -->
+      <div>
+
+        <!-- Informations du compte -->
+        <div class="settings-section">
+          <div class="settings-section-header">
+            <span class="settings-section-icon">👤</span>
+            <div class="settings-section-title">Informations du compte</div>
+          </div>
+          <div class="settings-body">
+            <div class="settings-row">
+              <div>
+                <div class="settings-label">Nom d'utilisateur</div>
+                <div class="settings-sublabel">Affiché dans l'application</div>
+              </div>
+              <input class="settings-input" id="settingUsername" placeholder="Username">
+            </div>
+            <div class="settings-row">
+              <div>
+                <div class="settings-label">Email</div>
+                <div class="settings-sublabel">Pour la récupération de mot de passe</div>
+              </div>
+              <input class="settings-input" id="settingEmail" type="email" placeholder="username@example.com">
+            </div>
+            <div class="settings-row">
+              <div>
+                <div class="settings-label">Nouveau mot de passe</div>
+                <div class="settings-sublabel">Laisser vide pour ne pas changer</div>
+              </div>
+              <input class="settings-input" id="settingPassword" type="password" placeholder="••••••••">
+            </div>
+            <div class="settings-actions">
+              <button class="btn btn-primary" onclick="Profile.saveAccount()">Enregistrer</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Préférences -->
+        <div class="settings-section">
+          <div class="settings-section-header">
+            <span class="settings-section-icon">⚙️</span>
+            <div class="settings-section-title">Préférences</div>
+          </div>
+          <div class="settings-body">
+            <div class="settings-row">
+              <div>
+                <div class="settings-label">Unités de distance</div>
+                <div class="settings-sublabel">km ou miles</div>
+              </div>
+              <select class="settings-select" id="settingUnits" onchange="Profile.savePref('units', this.value)">
+                <option value="km">Kilomètres (km)</option>
+                <option value="miles">Miles (mi)</option>
+              </select>
+            </div>
+            <div class="settings-row">
+              <div>
+                <div class="settings-label">Format horaire</div>
+                <div class="settings-sublabel">Affichage des heures</div>
+              </div>
+              <select class="settings-select" id="settingTimeFormat" onchange="Profile.savePref('timeFormat', this.value)">
+                <option value="24h">24h</option>
+                <option value="12h">12h (AM/PM)</option>
+              </select>
+            </div>
+            <div class="settings-row">
+              <div>
+                <div class="settings-label">Notifications de fin de sortie</div>
+                <div class="settings-sublabel">Alerte sonore à l'arrêt du tracker</div>
+              </div>
+              <label class="toggle">
+                <input type="checkbox" id="settingNotif" onchange="Profile.savePref('notif', this.checked)">
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+            <div class="settings-row">
+              <div>
+                <div class="settings-label">Centrer la carte sur ma position</div>
+                <div class="settings-sublabel">Suivi automatique pendant le tracker</div>
+              </div>
+              <label class="toggle">
+                <input type="checkbox" id="settingAutoCenter" checked onchange="Profile.savePref('autoCenter', this.checked)">
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Apparence -->
+        <div class="settings-section">
+          <div class="settings-section-header">
+            <span class="settings-section-icon">🎨</span>
+            <div class="settings-section-title">Apparence</div>
+          </div>
+          <div class="settings-body">
+            <div class="settings-row">
+              <div>
+                <div class="settings-label">Thème</div>
+                <div class="settings-sublabel">Dark, Light ou Garmin</div>
+              </div>
+              <div id="themeSwitcherProfile"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Zone danger -->
+        <div class="danger-zone">
+          <div class="danger-zone-title">⚠️ Zone de danger</div>
+          <p>Ces actions sont irréversibles. Assure-toi de ce que tu fais avant de continuer.</p>
+          <div style="display:flex; gap:10px; flex-wrap:wrap">
+            <button class="btn-danger" onclick="Profile.confirmDeleteData()">🗑 Supprimer toutes mes sorties</button>
+            <button class="btn-danger" onclick="Profile.confirmDeleteAccount()">❌ Supprimer mon compte</button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="bottom-nav"></div>
+<div id="toast"></div>
+
+<script src="js/theme.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/api.js"></script>
+<script src="js/components.js"></script>
+<script src="js/profile.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', async () => {
+    await Components.init('profile', 'Profil & Paramètres');
+    Theme.renderSwitcher('themeSwitcherProfile');
+    Profile.load();
+  });
+</script>
+</body>
+</html>

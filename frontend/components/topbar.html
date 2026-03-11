@@ -1,0 +1,18 @@
+<div class="topbar">
+  <div class="topbar-title" id="topbarTitle">GeoTracer</div>
+  <div class="topbar-user-wrap" id="topbarUserWrap"
+    onclick="window.location.href='profile.html'"
+    style="cursor:pointer;display:flex;align-items:center;gap:8px">
+    <div id="topbarAvatar"
+      style="width:28px;height:28px;border-radius:50%;
+             background:linear-gradient(135deg,var(--accent),#0066ff);
+             display:flex;align-items:center;justify-content:center;
+             font-size:13px;font-weight:700;color:#000;
+             overflow:hidden;flex-shrink:0">
+    </div>
+    <span class="topbar-user" id="topbarUsername"></span>
+  </div>
+  <input class="api-input" id="apiUrl" value="https://geoapi.laurentjouron.dev" placeholder="API URL">
+  <div id="themeSwitcher"></div>
+  <div class="status-pill offline" id="statusPill">offline</div>
+</div>

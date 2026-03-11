@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <script>
+    document.documentElement.setAttribute('data-theme', localStorage.getItem('vt_theme') || 'dark');
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#080c10">
+  <link rel="icon" href="images/favicon.ico">
+  <title>GeoTracer — Dashboard</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&family=Exo+2:wght@300;400;600;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/themes.css">
+</head>
+<body>
+
+<div id="sidebar"></div>
+
+<div class="main">
+  <div id="topbar"></div>
+  <div class="page-content">
+
+    <div class="dash-hero">
+      <div class="dash-hero-name">GeoTracer</div>
+      <div class="dash-hero-label" id="heroLabel">Bonjour</div>
+    </div>
+
+    <div class="kpi-row">
+      <div class="kpi-card blue">
+        <div class="kpi-icon">📏</div>
+        <div class="kpi-label">Distance totale</div>
+        <div class="kpi-value" id="kpiDist">—<span class="kpi-unit">km</span></div>
+      </div>
+      <div class="kpi-card orange">
+        <div class="kpi-icon">🏁</div>
+        <div class="kpi-label">Sorties</div>
+        <div class="kpi-value" id="kpiRides">—</div>
+      </div>
+      <div class="kpi-card green">
+        <div class="kpi-icon">⚡</div>
+        <div class="kpi-label">Vitesse moy.</div>
+        <div class="kpi-value" id="kpiSpeed">—<span class="kpi-unit">km/h</span></div>
+      </div>
+      <div class="kpi-card yellow">
+        <div class="kpi-icon">⬆️</div>
+        <div class="kpi-label">Dénivelé total</div>
+        <div class="kpi-value" id="kpiElev">—<span class="kpi-unit">m</span></div>
+      </div>
+    </div>
+
+    <div class="section-header">
+      <div class="section-title">Sorties récentes</div>
+      <a class="btn btn-ghost" href="activities.html">Toutes →</a>
+    </div>
+    <div class="activity-list" id="recentList"></div>
+
+  </div>
+</div>
+
+<div id="bottom-nav"></div>
+<div id="toast"></div>
+
+<script src="js/theme.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/api.js"></script>
+<script src="js/components.js"></script>
+<script src="js/dashboard.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', async () => {
+    await Components.init('dashboard', 'Dashboard');
+    Dashboard.load();
+  });
+</script>
+</body>
+</html>

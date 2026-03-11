@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <script>
+    document.documentElement.setAttribute('data-theme', localStorage.getItem('vt_theme') || 'dark');
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#080c10">
+  <link rel="icon" href="images/favicon.ico">
+  <title>GeoTracer — Statistiques</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&family=Exo+2:wght@300;400;600;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/stats.css">
+  <link rel="stylesheet" href="css/themes.css">
+  <script src="https://cdn.plot.ly/plotly-2.30.0.min.js"></script>
+</head>
+<body>
+
+<div id="sidebar"></div>
+
+<div class="main">
+  <div id="topbar"></div>
+  <div class="page-content">
+
+    <div class="period-tabs">
+      <button class="period-tab active" onclick="Stats.setPeriod('week',this)">7 jours</button>
+      <button class="period-tab" onclick="Stats.setPeriod('month',this)">30 jours</button>
+      <button class="period-tab" onclick="Stats.setPeriod('year',this)">12 mois</button>
+      <button class="period-tab" onclick="Stats.setPeriod('all',this)">Tout</button>
+    </div>
+
+    <div class="stats-kpi-row">
+      <div class="stats-kpi c1"><div class="stats-kpi-icon">📏</div><div class="stats-kpi-lbl">Distance</div><div class="stats-kpi-val" id="skDist">—<span class="stats-kpi-unit">km</span></div><div class="stats-kpi-delta" id="skDistDelta"></div></div>
+      <div class="stats-kpi c2"><div class="stats-kpi-icon">🏁</div><div class="stats-kpi-lbl">Sorties</div><div class="stats-kpi-val" id="skRides">—</div><div class="stats-kpi-delta" id="skRidesDelta"></div></div>
+      <div class="stats-kpi c3"><div class="stats-kpi-icon">⬆️</div><div class="stats-kpi-lbl">Dénivelé +</div><div class="stats-kpi-val" id="skElev">—<span class="stats-kpi-unit">m</span></div><div class="stats-kpi-delta" id="skElevDelta"></div></div>
+      <div class="stats-kpi c4"><div class="stats-kpi-icon">⏱</div><div class="stats-kpi-lbl">Temps selle</div><div class="stats-kpi-val" id="skTime">—</div><div class="stats-kpi-delta" id="skTimeDelta"></div></div>
+    </div>
+
+    <div class="charts-grid">
+      <div class="stat-chart-card"><div class="stat-chart-header"><div class="stat-chart-title">Distance par sortie</div></div><div class="stat-chart-body"><div id="chartDistBar" style="height:200px"></div></div></div>
+      <div class="stat-chart-card"><div class="stat-chart-header"><div class="stat-chart-title">Vitesse moyenne</div></div><div class="stat-chart-body"><div id="chartSpeedLine" style="height:200px"></div></div></div>
+    </div>
+
+    <div class="charts-grid full">
+      <div class="stat-chart-card"><div class="stat-chart-header"><div class="stat-chart-title">Distance cumulée</div></div><div class="stat-chart-body"><div id="chartCumDist" style="height:200px"></div></div></div>
+    </div>
+
+    <div class="stats-section-title">Activité annuelle</div>
+    <div class="heatmap-wrap">
+      <div class="heatmap-header"><div class="stat-chart-title">Jours d'activité — 12 derniers mois</div></div>
+      <div class="heatmap-body">
+        <div class="heatmap-months" id="heatmapMonths"></div>
+        <div class="heatmap-grid" id="heatmapGrid"></div>
+      </div>
+    </div>
+
+    <div class="stats-section-title">Records personnels</div>
+    <div class="records-grid" id="recordsGrid"></div>
+
+  </div>
+</div>
+
+<div id="bottom-nav"></div>
+<div id="toast"></div>
+
+<script src="js/theme.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/api.js"></script>
+<script src="js/components.js"></script>
+<script src="js/stats.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', async () => {
+    await Components.init('stats', 'Statistiques');
+    Stats.load();
+  });
+</script>
+</body>
+</html>

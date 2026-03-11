@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <script>
+    document.documentElement.setAttribute('data-theme', localStorage.getItem('vt_theme') || 'dark');
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#080c10">
+  <link rel="icon" href="images/favicon.ico">
+  <title>GeoTracer — Live</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&family=Exo+2:wght@300;400;600;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/tracker.css">
+  <link rel="stylesheet" href="css/themes.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+</head>
+<body>
+
+<div id="sidebar"></div>
+
+<div class="main">
+  <div id="topbar"></div>
+  <div class="page-content">
+    <div class="tracker-layout">
+
+      <!-- CARTE LEAFLET -->
+      <div class="tracker-map-wrap" id="trackerMapWrap">
+        <div id="liveMap"></div>
+        <button class="map-fullscreen-btn" onclick="Tracker.toggleFullscreen()">⛶ Plein écran</button>
+      </div>
+
+      <!-- MÉTRIQUES -->
+      <div class="live-panel">
+        <div class="live-panel-header">
+          <span style="font-size:18px">◉</span>
+          <div class="title">Données live</div>
+          <div class="badge live" id="liveBadge" style="display:none">Live</div>
+        </div>
+
+        <div class="gps-accuracy">
+          <div class="gps-dot" id="gpsDot"></div>
+          <span id="gpsAccText">GPS en attente...</span>
+        </div>
+
+        <div class="live-metric">
+          <div class="live-metric-lbl">Vitesse</div>
+          <div class="live-metric-val" id="liveSpeed">—<span class="unit">km/h</span></div>
+        </div>
+        <div class="speed-bar-wrap">
+          <div class="speed-bar-label"><span>0</span><span>60 km/h</span></div>
+          <div class="speed-bar"><div class="speed-bar-fill" id="speedFill" style="width:0"></div></div>
+        </div>
+        <div class="live-metric">
+          <div class="live-metric-lbl">Altitude</div>
+          <div class="live-metric-val" id="liveAlt">—<span class="unit">m</span></div>
+        </div>
+        <div class="live-metric">
+          <div class="live-metric-lbl">Distance</div>
+          <div class="live-metric-val" id="liveDist">0.00<span class="unit">km</span></div>
+        </div>
+        <div class="live-metric">
+          <div class="live-metric-lbl">Durée</div>
+          <div class="live-metric-val" id="liveDur">00:00<span class="unit"></span></div>
+        </div>
+        <div class="live-metric">
+          <div class="live-metric-lbl">Points GPS</div>
+          <div class="live-metric-val" id="livePoints">0<span class="unit">pts</span></div>
+        </div>
+
+        <div class="live-controls">
+          <input class="watch-input" id="watchIdInput" placeholder="ID sortie à suivre (ami)">
+          <button class="btn-live start" id="startBtn" onclick="Tracker.toggle()">
+            <span>▶</span> Démarrer
+          </button>
+          <button class="btn-live watch" onclick="Tracker.watchFriend()">
+            <span>👁</span> Suivre un ami
+          </button>
+        </div>
+
+        <!-- Panneau de partage — visible quand sortie active -->
+        <div id="sharePanel" style="display:none;flex-direction:column;gap:8px;margin-top:12px;
+          background:rgba(0,212,255,0.06);border:1px solid rgba(0,212,255,0.2);
+          border-radius:10px;padding:12px;">
+          <div style="font-family:var(--font-mono);font-size:9px;color:var(--accent);
+            letter-spacing:0.15em;text-transform:uppercase;margin-bottom:2px">
+            🔗 Partager ma position
+          </div>
+          <div id="sharePanelUrl" style="font-family:var(--font-mono);font-size:10px;
+            color:var(--text2);word-break:break-all;line-height:1.4;cursor:pointer;"
+            onclick="Tracker_copyShareUrl()" title="Copier le lien">
+          </div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap">
+            <button class="btn btn-ghost" style="font-size:11px;padding:6px 12px"
+              onclick="Tracker_copyShareUrl()">📋 Copier</button>
+            <button class="btn btn-ghost" style="font-size:11px;padding:6px 12px"
+              onclick="Tracker_shareActivity()">🔗 Partager</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<div id="bottom-nav"></div>
+<div id="toast"></div>
+
+<script src="js/theme.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/api.js"></script>
+<script src="js/components.js"></script>
+<script src="js/tracker.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', async () => {
+    await Components.init('tracker', 'Suivi live');
+    Tracker.initMap();
+  });
+</script>
+</body>
+</html>

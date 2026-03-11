@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <script>
+    document.documentElement.setAttribute('data-theme', localStorage.getItem('vt_theme') || 'dark');
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#080c10">
+  <link rel="icon" href="images/favicon.ico">
+  <title>GeoTracer — Connexion</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&family=Exo+2:wght@300;400;600;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/themes.css">
+</head>
+<body class="auth-body">
+
+<div class="auth-overlay">
+  <div class="auth-card">
+
+    <div class="auth-logo">🚴</div>
+    <div class="auth-title">GeoTracer</div>
+    <div class="auth-sub">Suivi GPS pour sorties vélo</div>
+
+    <input class="auth-api-input" id="apiUrlAuth"
+      value="http://localhost:8000" placeholder="URL du backend">
+
+    <div class="auth-tabs">
+      <button class="auth-tab active" data-tab="login"    onclick="Auth.switchTab('login')">Connexion</button>
+      <button class="auth-tab"        data-tab="register" onclick="Auth.switchTab('register')">Inscription</button>
+    </div>
+
+    <div class="auth-error" id="authError"></div>
+
+    <!-- Login -->
+    <div class="auth-form active" id="form-login">
+      <div class="auth-field">
+        <label>Nom d'utilisateur</label>
+        <input id="loginUsername" type="text" placeholder="username" autocomplete="username">
+      </div>
+      <div class="auth-field">
+        <label>Mot de passe</label>
+        <input id="loginPassword" type="password" placeholder="mot de pass" autocomplete="current-password">
+      </div>
+      <button class="auth-submit" id="loginBtn" onclick="Auth.submitLogin()">
+        Se connecter
+      </button>
+    </div>
+
+    <!-- Register -->
+    <div class="auth-form" id="form-register">
+      <div class="auth-field">
+        <label>Nom d'utilisateur</label>
+        <input id="regUsername" type="text" placeholder="username" autocomplete="username">
+      </div>
+      <div class="auth-field">
+        <label>Email</label>
+        <input id="regEmail" type="email" placeholder="username@example.com" autocomplete="email">
+      </div>
+      <div class="auth-field">
+        <label>Mot de passe</label>
+        <input id="regPassword" type="password" placeholder="8 caractères minimum" autocomplete="new-password">
+      </div>
+      <div class="auth-field">
+        <label>Confirmer le mot de passe</label>
+        <input id="regConfirm" type="password" placeholder="confirmer le mot de passe" autocomplete="new-password">
+      </div>
+      <button class="auth-submit" id="registerBtn" onclick="Auth.submitRegister()">
+        S'inscrire
+      </button>
+    </div>
+
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script src="js/theme.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/auth.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    Auth.initLoginPage();
+  });
+</script>
+</body>
+</html>

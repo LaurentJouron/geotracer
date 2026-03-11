@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <script>
+    document.documentElement.setAttribute('data-theme', localStorage.getItem('vt_theme') || 'dark');
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#080c10">
+  <link rel="icon" href="images/favicon.ico">
+  <title>GeoTracer — Import GPX</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&family=Exo+2:wght@300;400;600;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/themes.css">
+</head>
+<body>
+
+<div id="sidebar"></div>
+
+<div class="main">
+  <div id="topbar"></div>
+  <div class="page-content">
+    <div class="import-zone" id="dropzone">
+      <div class="import-icon">📂</div>
+      <div class="import-title">Importer une sortie</div>
+      <div class="import-sub">
+        Glissez votre fichier GPX ici<br>
+        Compatible avec tous les appareils GPS
+      </div>
+      <div class="import-formats">
+        <span class="format-tag">Garmin</span>
+        <span class="format-tag">Wahoo</span>
+        <span class="format-tag">Komoot</span>
+        <span class="format-tag">Strava</span>
+        <span class="format-tag">RideWithGPS</span>
+      </div>
+      <input type="file" id="gpxFile" accept=".gpx" style="display:none"
+        onchange="Import.handleFile()">
+      <button class="btn btn-primary" style="font-size:15px;padding:12px 32px"
+        onclick="document.getElementById('gpxFile').click()">
+        Choisir un fichier .gpx
+      </button>
+    </div>
+  </div>
+</div>
+
+<div id="bottom-nav"></div>
+<div id="toast"></div>
+
+<script src="js/theme.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/api.js"></script>
+<script src="js/components.js"></script>
+<script src="js/import.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', async () => {
+    await Components.init('import', 'Import GPX');
+    Import.initDropzone();
+  });
+</script>
+</body>
+</html>

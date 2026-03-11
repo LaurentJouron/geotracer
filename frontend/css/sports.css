@@ -1,0 +1,292 @@
+/* ── Sport tabs ── */
+.sport-tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+}
+
+.sport-tab {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--bg2);
+    color: var(--text2);
+    font-family: var(--font-head);
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.05em;
+}
+
+.sport-tab:hover {
+    border-color: var(--accent);
+    color: var(--text);
+}
+
+.sport-tab.active {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: rgba(0,212,255,0.08);
+}
+
+.sport-tab .tab-count {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    background: var(--bg3);
+    border-radius: 20px;
+    padding: 2px 8px;
+    color: var(--text3);
+}
+
+.sport-tab.active .tab-count {
+    background: rgba(0,212,255,0.15);
+    color: var(--accent);
+}
+
+/* ── KPI ── */
+.sport-kpi-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 10px;
+    margin-bottom: 24px;
+}
+
+.sport-kpi {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 16px;
+}
+
+.sport-kpi-icon {
+    font-size: 18px;
+    margin-bottom: 6px;
+}
+
+.sport-kpi-lbl {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    color: var(--text3);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+
+.sport-kpi-val {
+    font-family: var(--font-head);
+    font-size: 24px;
+    font-weight: 800;
+    color: var(--text);
+    line-height: 1.1;
+}
+
+.sport-kpi-unit {
+    font-size: 12px;
+    color: var(--text2);
+    margin-left: 3px;
+}
+
+/* ── Zone FC bars ── */
+.hr-zones-wrap {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 16px;
+}
+
+.hr-zones-title {
+    font-family: var(--font-head);
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text2);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+}
+
+.hr-zone-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 10px;
+}
+
+.hr-zone-label {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--text2);
+    width: 56px;
+    flex-shrink: 0;
+}
+
+.hr-zone-bar-wrap {
+    flex: 1;
+    background: var(--bg3);
+    border-radius: 4px;
+    height: 10px;
+    overflow: hidden;
+}
+
+.hr-zone-bar {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.6s ease;
+}
+
+.hr-zone-time {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--text3);
+    width: 52px;
+    text-align: right;
+    flex-shrink: 0;
+}
+
+.hr-zone-pct {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    width: 36px;
+    text-align: right;
+    flex-shrink: 0;
+}
+
+/* ── Charts grid ── */
+.sports-charts-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+@media(max-width: 700px) { 
+    .sports-charts-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.sports-chart-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+}
+
+.sports-chart-title {
+    font-family: var(--font-head);
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text2);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+}
+
+/* ── Session list ── */
+.sessions-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+}
+
+.sessions-title {
+    font-family: var(--font-head);
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text);
+}
+
+.session-row {
+    display: grid;
+    grid-template-columns: 36px 1fr 80px 70px 60px 60px 64px;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    border-radius: 8px;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    margin-bottom: 6px;
+    cursor: pointer;
+    transition: border-color 0.2s;
+    font-size: 13px;
+}
+
+.session-row:hover {
+    border-color: var(--accent);
+}
+
+.session-num {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--text3);
+}
+
+.session-info .title {
+    font-family: var(--font-head);
+    font-weight: 700;
+    color: var(--text);
+    font-size: 14px;
+}
+
+.session-info .date {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--text3);
+}
+
+.session-stat {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--text2);
+    text-align: right;
+}
+
+.session-stat .lbl {
+    font-size: 9px;
+    color: var(--text3);
+    display: block;
+}
+
+.badge-sport {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-family: var(--font-mono);
+    font-size: 9px;
+    letter-spacing: 0.08em;
+    padding: 2px 8px;
+    border-radius: 20px;
+    font-weight: 700;
+}
+
+.badge-cycling  {
+    background: rgba(0,212,255,0.12);
+    color: var(--accent);
+    border: 1px solid rgba(0,212,255,0.2);
+}
+
+.badge-running  {
+    background: rgba(0,255,136,0.12);
+    color: var(--green);
+    border: 1px solid rgba(0,255,136,0.2);
+}
+
+.badge-swimming {
+    background: rgba(100,120,255,0.12);
+    color: #6478ff;
+    border: 1px solid rgba(100,120,255,0.2);
+}
+
+@media(max-width:600px) {
+    .session-row {
+        grid-template-columns: 28px 1fr 70px 56px;
+    }
+    .session-row > *:nth-child(n+5) {
+        display: none;
+    }
+}

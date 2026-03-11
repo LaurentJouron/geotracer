@@ -1,0 +1,246 @@
+/* ═══════════════════════════════════════
+   THÈMES — GeoTracer
+   Appliqué via data-theme="dark|light|garmin" sur <html>
+═══════════════════════════════════════ */
+
+/* ── DARK (défaut) ── */
+[data-theme="dark"],
+:root {
+    --bg:        #080c10;
+    --bg2:       #0d1117;
+    --bg3:       #131a22;
+    --bg4:       #1a2330;
+    --border:    rgba(255,255,255,0.06);
+    --border2:   rgba(255,255,255,0.12);
+    --accent:    #00d4ff;
+    --accent2:   #ff6b00;
+    --green:     #00ff88;
+    --red:       #ff3355;
+    --yellow:    #ffd600;
+    --text:      #c8d8e8;
+    --text2:     #6a8099;
+    --text3:     #3a5068;
+
+    --map-filter: brightness(0.7) invert(1) hue-rotate(180deg);
+    --theme-icon: '🌙';
+}
+
+/* ── LIGHT ── */
+[data-theme="light"] {
+    --bg:        #f0f4f8;
+    --bg2:       #ffffff;
+    --bg3:       #e8edf2;
+    --bg4:       #dde3ea;
+    --border:    rgba(0,0,0,0.08);
+    --border2:   rgba(0,0,0,0.15);
+    --accent:    #0088cc;
+    --accent2:   #e05a00;
+    --green:     #00aa55;
+    --red:       #cc1133;
+    --yellow:    #cc9900;
+    --text:      #1a2a3a;
+    --text2:     #4a6070;
+    --text3:     #8a9aaa;
+
+    --map-filter: none;
+    --theme-icon: '☀️';
+}
+
+[data-theme="light"] body {
+    background: var(--bg);
+    color: var(--text);
+}
+
+[data-theme="light"] .sidebar {
+    background: var(--bg2);
+    border-right: 1px solid var(--border2);
+}
+
+[data-theme="light"] .topbar {
+    background: rgba(240,244,248,0.95);
+    border-bottom: 1px solid var(--border2);
+}
+
+[data-theme="light"] .kpi-card,
+[data-theme="light"] .activity-row,
+[data-theme="light"] .chart-card,
+[data-theme="light"] .live-panel,
+[data-theme="light"] .detail-map-wrap,
+[data-theme="light"] .import-zone {
+    background: var(--bg2);
+    border-color: var(--border2);
+}
+
+[data-theme="light"] .activity-row:hover {
+    background: var(--bg3);
+    border-color: var(--accent);
+}
+
+[data-theme="light"] .dash-hero {
+    background: linear-gradient(135deg, #e0e8f0, #f0f4f8);
+    border-color: var(--border2);
+}
+
+[data-theme="light"] .stats-band {
+    border-color: var(--border2);
+}
+
+[data-theme="light"] .stat-cell {
+    background: var(--bg2);
+    border-right-color: var(--border2);
+}
+
+[data-theme="light"] .badge.done {
+    background: rgba(74,96,112,0.1);
+    border-color: var(--border2);
+    color: var(--text2);
+}
+
+[data-theme="light"] .nav-item:hover {
+    background: rgba(0,0,0,0.04);
+}
+
+[data-theme="light"] .nav-item.active,
+[data-theme="light"] a.nav-item.active {
+    background: rgba(0,136,204,0.08);
+    border-left-color: var(--accent);
+    color: var(--accent);
+}
+
+[data-theme="light"] .auth-card {
+    background: var(--bg2);
+    border-color: var(--border2);
+    box-shadow: 0 24px 64px rgba(0,0,0,0.12);
+}
+
+[data-theme="light"] .auth-tabs {
+    background: var(--bg3);
+
+}
+[data-theme="light"] .auth-tab.active {
+    background: var(--bg2);
+}
+
+[data-theme="light"] .auth-field input,
+[data-theme="light"] .watch-input,
+[data-theme="light"] .api-input,
+[data-theme="light"] .auth-api-input {
+    background: var(--bg3);
+    border-color: var(--border2);
+    color: var(--text);
+}
+
+[data-theme="light"] #toast {
+    background: var(--bg2);
+    border-color: var(--border2);
+    border-left-color: var(--accent);
+    color: var(--text);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+}
+
+[data-theme="light"] .leaflet-tile-pane {
+    filter: none;
+}
+
+[data-theme="light"] .leaflet-container {
+    background: #e8edf2;
+}
+
+/* ── GARMIN ── */
+[data-theme="garmin"] {
+    --bg:        #1c1e21;
+    --bg2:       #242628;
+    --bg3:       #2e3033;
+    --bg4:       #383a3e;
+    --border:    rgba(255,255,255,0.07);
+    --border2:   rgba(255,255,255,0.14);
+    --accent:    #ff7b00;
+    --accent2:   #00c8ff;
+    --green:     #7ac943;
+    --red:       #ff3b30;
+    --yellow:    #ffcc00;
+    --text:      #e8e8e8;
+    --text2:     #8a8e94;
+    --text3:     #505458;
+
+    --map-filter: brightness(0.65) invert(1) hue-rotate(180deg);
+    --theme-icon: '🟠';
+}
+
+[data-theme="garmin"] .kpi-card.blue::after   {
+    background: linear-gradient(90deg, transparent, var(--accent2), transparent);
+}
+
+[data-theme="garmin"] .kpi-card.orange::after {
+    background: linear-gradient(90deg, transparent, var(--accent), transparent);
+}
+
+[data-theme="garmin"] .speed-bar-fill {
+    background: linear-gradient(90deg, var(--accent), var(--yellow));
+}
+
+[data-theme="garmin"] .btn-live.start {
+    background: linear-gradient(135deg, var(--accent), #cc5500);
+}
+
+[data-theme="garmin"] .dash-hero-name {
+    background: linear-gradient(90deg, var(--text), var(--accent));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+[data-theme="garmin"] .sidebar-logo {
+    background: linear-gradient(135deg, var(--accent), #cc5500);
+}
+
+[data-theme="garmin"] .auth-submit {
+    background: linear-gradient(135deg, var(--accent), #cc5500);
+}
+
+/* ── Leaflet map filter par thème ── */
+.leaflet-tile-pane {
+    filter: var(--map-filter, none);
+}
+
+/* ── Sélecteur de thème ── */
+.theme-switcher {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    padding: 0 8px;
+}
+
+.theme-btn {
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    border: 1px solid var(--border2);
+    cursor: pointer;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg3);
+    transition: all 0.2s;
+    flex-shrink: 0;
+}
+
+.theme-btn:hover {
+    border-color: var(--accent);
+    transform: scale(1.1);
+}
+
+.theme-btn.active {
+    border-color: var(--accent);
+    background: rgba(0,212,255,0.1);
+}
+
+[data-theme="garmin"] .theme-btn.active {
+    border-color: var(--accent);
+    background: rgba(255,123,0,0.1);
+}
+
+[data-theme="light"] .theme-btn.active {
+    border-color: var(--accent);
+    background: rgba(0,136,204,0.1);
+}

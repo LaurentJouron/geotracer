@@ -1,0 +1,31 @@
+{
+  "name": "GeoGraphix",
+  "short_name": "GeoGraphix",
+  "description": "Suivi GPS pour sorties vélo",
+  "start_url": "/index.html",
+  "display": "standalone",
+  "background_color": "#080c10",
+  "theme_color": "#080c10",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "images/icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["sports", "health", "navigation"],
+  "shortcuts": [
+    {
+      "name": "Démarrer une sortie",
+      "url": "/tracker.html",
+      "description": "Lancer le suivi GPS"
+    },
+    {
+      "name": "Mes sorties",
+      "url": "/activities.html",
+      "description": "Voir toutes les sorties"
+    }
+  ]
+}

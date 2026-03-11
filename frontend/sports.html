@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <script>
+    document.documentElement.setAttribute('data-theme', localStorage.getItem('vt_theme') || 'dark');
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#080c10">
+  <link rel="icon" href="images/favicon.ico">
+  <title>GeoTracer — Multi-Sport</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&family=Exo+2:wght@300;400;600;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/themes.css">
+  <link rel="stylesheet" href="css/sports.css">
+  <script src="https://cdn.plot.ly/plotly-2.30.0.min.js"></script>
+</head>
+<body>
+
+<div id="sidebar"></div>
+
+<div class="main">
+  <div id="topbar"></div>
+  <div class="page-content">
+
+    <!-- Sport tabs -->
+    <div class="sport-tabs">
+      <button class="sport-tab active" data-sport="all" onclick="Sports.setFilter('all',this)">
+        🏅 Tous <span class="tab-count" id="cnt-all">0</span>
+      </button>
+      <button class="sport-tab" data-sport="cycling" onclick="Sports.setFilter('cycling',this)">
+        🚴 Vélo <span class="tab-count" id="cnt-cycling">0</span>
+      </button>
+      <button class="sport-tab" data-sport="running" onclick="Sports.setFilter('running',this)">
+        🏃 Running <span class="tab-count" id="cnt-running">0</span>
+      </button>
+      <button class="sport-tab" data-sport="swimming" onclick="Sports.setFilter('swimming',this)">
+        🏊 Natation <span class="tab-count" id="cnt-swimming">0</span>
+      </button>
+    </div>
+
+    <!-- KPIs -->
+    <div class="sport-kpi-row" id="sportKpis"></div>
+
+    <!-- Charts -->
+    <div class="sports-charts-grid">
+      <div class="sports-chart-card">
+        <div class="sports-chart-title">Distance par sortie</div>
+        <div id="chartSportDist" style="height:180px"></div>
+      </div>
+      <div class="sports-chart-card">
+        <div class="sports-chart-title">Évolution mensuelle (km)</div>
+        <div id="chartSportMonthly" style="height:180px"></div>
+      </div>
+    </div>
+
+    <!-- Zones FC -->
+    <div class="hr-zones-wrap" id="hrZonesWrap">
+      <div class="hr-zones-title">❤️ Zones de fréquence cardiaque — cumul</div>
+      <div id="hrZonesBars"></div>
+    </div>
+
+    <!-- Liste des séances -->
+    <div class="sessions-header">
+      <div class="sessions-title" id="sessionsTitle">Toutes les séances</div>
+    </div>
+    <div id="sessionsList"></div>
+
+  </div>
+</div>
+
+<div id="bottom-nav"></div>
+<div id="toast"></div>
+
+<script src="js/theme.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/api.js"></script>
+<script src="js/components.js"></script>
+<script src="js/sports.js"></script>
+
+<script>
+  document.addEventListener('DOMContentLoaded', async () => {
+    await Components.init('sports', 'Multi-Sport');
+    Sports.load();
+  });
+</script>
+</body>
+</html>

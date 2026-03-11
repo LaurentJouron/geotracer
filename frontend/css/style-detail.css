@@ -1,0 +1,156 @@
+/* ── Carte Leaflet ── */
+#detailMap {
+    width: 100%;
+    height: 480px;
+    background: var(--bg3);
+}
+
+.detail-map-wrap {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 20px;
+    position: relative;
+}
+
+.detail-map-header {
+    padding: 14px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+}
+
+.detail-map-header .title {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--text2);
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.detail-map-header .title::before {
+    content: '';
+    width: 3px;
+    height: 14px;
+    border-radius: 2px;
+    background: var(--accent2);
+}
+
+/* Leaflet dark theme — identique au tracker */
+.leaflet-tile-pane {
+    filter: none;
+}
+
+.leaflet-container {
+    background: #0d1117;
+}
+
+.leaflet-control-attribution {
+    display: none;
+}
+
+.leaflet-control-zoom a {
+    background: var(--bg3) !important;
+    color: var(--text) !important;
+    border-color: var(--border2) !important;
+}
+
+/* Marqueurs début / fin */
+.map-marker-start, .map-marker-end {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: 2px solid white;
+}
+
+.map-marker-start {
+    background: var(--green);
+}
+
+.map-marker-end {
+    background: var(--red);
+}
+
+/* Popup Leaflet */
+.leaflet-popup-content-wrapper {
+    background: var(--bg3);
+    border: 1px solid var(--border2);
+    border-radius: 6px;
+    color: var(--text);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+}
+
+.leaflet-popup-tip {
+    background: var(--bg3);
+}
+
+/* Légende carte */
+.map-legend {
+    position: absolute;
+    bottom: 16px;
+    left: 16px;
+    z-index: 400;
+    background: rgba(13,17,23,0.9);
+    border: 1px solid var(--border2);
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--text2);
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.map-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.map-legend-line {
+    width: 24px;
+    height: 3px;
+    border-radius: 2px;
+    flex-shrink: 0;
+}
+
+.map-legend-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    border: 2px solid white;
+    flex-shrink: 0;
+}
+
+/* Bouton fullscreen */
+.map-fullscreen-btn {
+    background: var(--bg3);
+    border: 1px solid var(--border2);
+    border-radius: 5px;
+    padding: 6px 12px;
+    cursor: pointer;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--text2);
+    transition: all 0.2s;
+    text-decoration: none;
+}
+
+.map-fullscreen-btn:hover {
+    color: var(--accent);
+    border-color: var(--accent);
+}
+
+@media(max-width:640px) {
+    #detailMap {
+        height: 300px;
+    }
+}
