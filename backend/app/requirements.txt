@@ -16,7 +16,7 @@ folium==0.16.0
 alembic==1.13.1
 aioredis==2.0.1
 gpxpy==1.6.2
-geopandas==0.14.4
+geopandas==1.1.2
 shapely==2.0.4
 pandas==2.2.2
 scipy==1.13.0
