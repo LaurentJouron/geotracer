@@ -1,6 +1,7 @@
 """
 Routes REST pour les sorties vélo.
 """
+
 import json
 from datetime import datetime
 from typing import List, Optional
@@ -19,6 +20,7 @@ router = APIRouter(prefix="/activities", tags=["activities"])
 
 
 # --- Schémas Pydantic ---
+
 
 class ActivityCreate(BaseModel):
     user_id: int
@@ -53,8 +55,11 @@ class GpsPointIn(BaseModel):
 
 # --- Endpoints ---
 
+
 @router.post("/", response_model=ActivityResponse)
-async def create_activity(data: ActivityCreate, db: AsyncSession = Depends(get_db)):
+async def create_activity(
+    data: ActivityCreate, db: AsyncSession = Depends(get_db)
+):
     """Démarre une nouvelle sortie."""
     activity = Activity(
         user_id=data.user_id,
@@ -100,15 +105,24 @@ async def add_gps_point(
 
 
 @router.post("/{activity_id}/finish", response_model=ActivityResponse)
-async def finish_activity(activity_id: int, db: AsyncSession = Depends(get_db)):
+async def finish_activity(
+    activity_id: int, db: AsyncSession = Depends(get_db)
+):
     """Termine une sortie et calcule les statistiques finales."""
     activity = await db.get(Activity, activity_id)
     if not activity:
         raise HTTPException(404, "Sortie introuvable")
 
     points = json.loads(activity.raw_points or "[]")
+
+    # Terminer proprement même sans points GPS (GPS refusé, home trainer, etc.)
+    activity.finished_at = datetime.utcnow()
+    activity.is_live = 0
+
     if len(points) < 2:
-        raise HTTPException(400, "Pas assez de points GPS pour calculer les stats")
+        await db.commit()
+        await db.refresh(activity)
+        return activity
 
     # Calcul des stats
     stats = compute_stats(points)
@@ -141,7 +155,9 @@ async def get_activity(activity_id: int, db: AsyncSession = Depends(get_db)):
 
 
 @router.get("/{activity_id}/map", response_class=HTMLResponse)
-async def get_activity_map(activity_id: int, db: AsyncSession = Depends(get_db)):
+async def get_activity_map(
+    activity_id: int, db: AsyncSession = Depends(get_db)
+):
     """Retourne la carte HTML Folium de la sortie."""
     activity = await db.get(Activity, activity_id)
     if not activity:
@@ -161,7 +177,9 @@ async def get_activity_map(activity_id: int, db: AsyncSession = Depends(get_db))
 
 
 @router.get("/{activity_id}/stats")
-async def get_activity_stats(activity_id: int, db: AsyncSession = Depends(get_db)):
+async def get_activity_stats(
+    activity_id: int, db: AsyncSession = Depends(get_db)
+):
     """Retourne les stats détaillées + séries temporelles pour les graphiques."""
     activity = await db.get(Activity, activity_id)
     if not activity:
@@ -212,9 +230,12 @@ async def import_gpx(
 
 
 @router.get("/{activity_id}/export/gpx")
-async def export_activity_gpx(activity_id: int, db: AsyncSession = Depends(get_db)):
+async def export_activity_gpx(
+    activity_id: int, db: AsyncSession = Depends(get_db)
+):
     """Exporte la sortie en fichier GPX."""
     from fastapi.responses import Response
+
     activity = await db.get(Activity, activity_id)
     if not activity:
         raise HTTPException(404, "Sortie introuvable")
@@ -225,7 +246,9 @@ async def export_activity_gpx(activity_id: int, db: AsyncSession = Depends(get_d
     return Response(
         content=gpx_xml,
         media_type="application/gpx+xml",
-        headers={"Content-Disposition": f"attachment; filename=sortie_{activity_id}.gpx"},
+        headers={
+            "Content-Disposition": f"attachment; filename=sortie_{activity_id}.gpx"
+        },
     )
 
 
@@ -241,19 +264,18 @@ async def get_activity_points(
     points = json.loads(activity.raw_points or "[]")
     return [
         {
-            "lat":        p.get("lat"),
-            "lon":        p.get("lon"),
-            "alt":        p.get("alt"),
-            "speed_kmh":  p.get("speed_kmh"),
+            "lat": p.get("lat"),
+            "lon": p.get("lon"),
+            "alt": p.get("alt"),
+            "speed_kmh": p.get("speed_kmh"),
             "heart_rate": p.get("heart_rate"),
-            "cadence":    p.get("cadence"),
-            "power":      p.get("power"),
-            "ts":         p.get("ts"),
+            "cadence": p.get("cadence"),
+            "power": p.get("power"),
+            "ts": p.get("ts"),
         }
         for p in points
         if p.get("lat") and p.get("lon")
     ]
-
 
 
 @router.patch("/{activity_id}/gpx", response_model=ActivityResponse)
@@ -280,17 +302,25 @@ async def enrich_activity_gpx(
     stats = compute_stats(points)
 
     # Mettre à jour le titre seulement si encore générique
-    if metadata.get("title") and activity.title in ("Sortie vélo", "Sortie importée", ""):
+    if metadata.get("title") and activity.title in (
+        "Sortie vélo",
+        "Sortie importée",
+        "",
+    ):
         activity.title = metadata["title"]
 
     # Remplacer les points et recalculer les stats
-    activity.raw_points       = json.dumps(points)
-    activity.is_live          = 0
-    activity.finished_at      = datetime.fromisoformat(points[-1]["ts"]) if points[-1].get("ts") else datetime.utcnow()
-    activity.distance_km      = stats.get("distance_km")
+    activity.raw_points = json.dumps(points)
+    activity.is_live = 0
+    activity.finished_at = (
+        datetime.fromisoformat(points[-1]["ts"])
+        if points[-1].get("ts")
+        else datetime.utcnow()
+    )
+    activity.distance_km = stats.get("distance_km")
     activity.duration_seconds = stats.get("duration_seconds")
-    activity.avg_speed_kmh    = stats.get("avg_speed_kmh")
-    activity.max_speed_kmh    = stats.get("max_speed_kmh")
+    activity.avg_speed_kmh = stats.get("avg_speed_kmh")
+    activity.max_speed_kmh = stats.get("max_speed_kmh")
     activity.elevation_gain_m = stats.get("elevation_gain_m")
     activity.elevation_loss_m = stats.get("elevation_loss_m")
 

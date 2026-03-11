@@ -1,15 +1,44 @@
 {
-  "name": "GeoGraphix",
-  "short_name": "GeoGraphix",
+  "name": "GeoTracer",
+  "short_name": "GeoTracer",
   "description": "Suivi GPS pour sorties vélo",
   "start_url": "/index.html",
+  "scope": "/",
   "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
   "background_color": "#080c10",
   "theme_color": "#080c10",
   "orientation": "portrait-primary",
+  "lang": "fr",
   "icons": [
     {
-      "src": "images/icon.png",
+      "src": "images/apple-touch-icon-120.png",
+      "sizes": "120x120",
+      "type": "image/png"
+    },
+    {
+      "src": "images/apple-touch-icon-152.png",
+      "sizes": "152x152",
+      "type": "image/png"
+    },
+    {
+      "src": "images/apple-touch-icon-167.png",
+      "sizes": "167x167",
+      "type": "image/png"
+    },
+    {
+      "src": "images/apple-touch-icon-180.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    },
+    {
+      "src": "images/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "images/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
@@ -19,13 +48,17 @@
   "shortcuts": [
     {
       "name": "Démarrer une sortie",
+      "short_name": "Tracker",
       "url": "/tracker.html",
-      "description": "Lancer le suivi GPS"
+      "description": "Lancer le suivi GPS",
+      "icons": [{ "src": "images/apple-touch-icon-120.png", "sizes": "120x120" }]
     },
     {
       "name": "Mes sorties",
+      "short_name": "Sorties",
       "url": "/activities.html",
-      "description": "Voir toutes les sorties"
+      "description": "Voir toutes les sorties",
+      "icons": [{ "src": "images/apple-touch-icon-120.png", "sizes": "120x120" }]
     }
   ]
 }

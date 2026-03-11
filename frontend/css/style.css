@@ -184,7 +184,7 @@ body::after {
     color: var(--text);
     font-family: var(--font-mono);
     font-size: 12px;
-    width: 250px;
+    width: 200px;
     outline: none;
     transition: border-color 0.2s;
 }

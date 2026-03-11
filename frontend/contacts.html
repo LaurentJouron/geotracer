@@ -15,127 +15,20 @@
   <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&family=Exo+2:wght@300;400;600;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
   <link rel="stylesheet" href="css/themes.css">
-  <style>
-    .contacts-grid {
-      display: grid;
-      grid-template-columns: 1fr 340px;
-      gap: 20px;
-    }
-    @media(max-width:800px) { .contacts-grid { grid-template-columns: 1fr; } }
-
-    /* ── Carte contact ── */
-    .contact-card {
-      display: flex; align-items: center; gap: 14px;
-      background: var(--bg2); border: 1px solid var(--border);
-      border-radius: 10px; padding: 14px 16px; margin-bottom: 8px;
-      transition: border-color 0.2s;
-    }
-    .contact-card:hover { border-color: var(--accent); }
-    .contact-avatar {
-      width: 42px; height: 42px; border-radius: 50%; flex-shrink: 0;
-      background: linear-gradient(135deg, var(--accent), #0066ff);
-      display: flex; align-items: center; justify-content: center;
-      font-family: var(--font-head); font-size: 18px; font-weight: 800; color: #000;
-    }
-    .contact-info { flex: 1; min-width: 0; }
-    .contact-name {
-      font-family: var(--font-head); font-size: 15px; font-weight: 700;
-      color: var(--text); letter-spacing: 0.05em;
-    }
-    .contact-detail {
-      font-family: var(--font-mono); font-size: 10px; color: var(--text3);
-      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-    }
-    .contact-actions { display: flex; gap: 6px; flex-shrink: 0; }
-    .btn-icon {
-      background: var(--bg3); border: 1px solid var(--border2);
-      border-radius: 6px; padding: 6px 10px; cursor: pointer;
-      font-size: 13px; color: var(--text2); transition: all 0.15s;
-    }
-    .btn-icon:hover { border-color: var(--accent); color: var(--accent); }
-    .btn-icon.danger:hover { border-color: var(--red); color: var(--red); }
-
-    /* ── Formulaire ajout ── */
-    .add-contact-form {
-      background: var(--bg2); border: 1px solid var(--border);
-      border-radius: 12px; padding: 20px;
-      position: sticky; top: 20px;
-    }
-    .add-contact-title {
-      font-family: var(--font-head); font-size: 16px; font-weight: 700;
-      color: var(--text); letter-spacing: 0.06em; text-transform: uppercase;
-      margin-bottom: 16px;
-    }
-    .form-field { margin-bottom: 12px; }
-    .form-label {
-      font-family: var(--font-mono); font-size: 9px; color: var(--text3);
-      text-transform: uppercase; letter-spacing: 0.12em; margin-bottom: 5px; display: block;
-    }
-    .form-input {
-      width: 100%; background: var(--bg3); border: 1px solid var(--border2);
-      border-radius: 6px; padding: 10px 12px; color: var(--text);
-      font-family: var(--font-mono); font-size: 12px;
-      outline: none; transition: border-color 0.2s; box-sizing: border-box;
-    }
-    .form-input:focus { border-color: var(--accent); }
-
-    /* ── Liens actifs ── */
-    .share-link-card {
-      background: var(--bg2); border: 1px solid var(--border);
-      border-radius: 10px; padding: 14px 16px; margin-bottom: 8px;
-    }
-    .share-link-label {
-      font-family: var(--font-head); font-size: 13px; font-weight: 700;
-      color: var(--text); margin-bottom: 4px;
-    }
-    .share-link-meta {
-      font-family: var(--font-mono); font-size: 9px; color: var(--text3);
-      margin-bottom: 8px;
-    }
-    .share-link-url {
-      font-family: var(--font-mono); font-size: 10px; color: var(--accent);
-      background: var(--bg3); border-radius: 4px; padding: 6px 10px;
-      word-break: break-all; cursor: pointer; margin-bottom: 8px;
-    }
-    .share-link-url:hover { text-decoration: underline; }
-
-    /* ── Modal partage ── */
-    .share-modal-overlay {
-      position: fixed; inset: 0; z-index: 9000;
-      background: rgba(0,0,0,0.75); backdrop-filter: blur(4px);
-      display: flex; align-items: center; justify-content: center; padding: 20px;
-    }
-    .share-modal {
-      background: var(--bg2); border: 1px solid rgba(0,212,255,0.2);
-      border-radius: 14px; padding: 28px; max-width: 480px; width: 100%;
-      box-shadow: 0 24px 64px rgba(0,0,0,0.6);
-    }
-    .share-modal-title {
-      font-family: var(--font-head); font-size: 20px; font-weight: 800;
-      color: var(--accent); letter-spacing: 0.08em; text-transform: uppercase;
-      margin-bottom: 20px;
-    }
-    .duration-grid {
-      display: grid; grid-template-columns: repeat(5,1fr); gap: 6px; margin-bottom: 16px;
-    }
-    .duration-btn {
-      background: var(--bg3); border: 1px solid var(--border2);
-      border-radius: 6px; padding: 8px 4px; text-align: center;
-      font-family: var(--font-mono); font-size: 11px; color: var(--text2);
-      cursor: pointer; transition: all 0.15s;
-    }
-    .duration-btn:hover, .duration-btn.active {
-      border-color: var(--accent); color: var(--accent);
-      background: rgba(0,212,255,0.08);
-    }
-    .contact-checkbox-row {
-      display: flex; align-items: center; gap: 10px;
-      padding: 10px 12px; border-radius: 8px;
-      background: var(--bg3); margin-bottom: 6px; cursor: pointer;
-    }
-    .contact-checkbox-row:hover { background: var(--bg4, #1a2030); }
-    .contact-checkbox-row input[type=checkbox] { accent-color: var(--accent); width:16px; height:16px; }
-  </style>
+  <link rel="stylesheet" href="css/contacts.css">
+  <!-- iOS PWA -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="GeoTracer">
+  <link rel="apple-touch-icon" href="images/apple-touch-icon.png">
+  <link rel="apple-touch-icon" sizes="120x120" href="images/apple-touch-icon-120.png">
+  <link rel="apple-touch-icon" sizes="152x152" href="images/apple-touch-icon-152.png">
+  <link rel="apple-touch-icon" sizes="167x167" href="images/apple-touch-icon-167.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="images/apple-touch-icon-180.png">
+  <link rel="apple-touch-startup-image" media="(device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3)" href="images/splash-1290x2796.png">
+  <link rel="apple-touch-startup-image" media="(device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3)" href="images/splash-1179x2556.png">
+  <link rel="apple-touch-startup-image" media="(device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3)" href="images/splash-1170x2532.png">
+  <link rel="apple-touch-startup-image" media="(device-width: 360px) and (device-height: 640px) and (-webkit-device-pixel-ratio: 3)" href="images/splash-1080x1920.png">
 </head>
 <body>
 
@@ -182,7 +75,7 @@
           <div class="add-contact-title">➕ Ajouter un contact</div>
           <div class="form-field">
             <label class="form-label">Nom</label>
-            <input class="form-input" id="newContactName" placeholder="Username Dupont">
+            <input class="form-input" id="newContactName" placeholder="Username name">
           </div>
           <div class="form-field">
             <label class="form-label">Email</label>
