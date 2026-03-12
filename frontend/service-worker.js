@@ -2,7 +2,7 @@
  * service-worker.js — Cache offline + Background sync GPS
  */
 
-const CACHE_NAME  = 'geotracer-v10';
+const CACHE_NAME  = 'geotracer-v13';
 const SYNC_TAG    = 'sync-gps-points';
 
 // Fichiers à mettre en cache pour le mode offline
@@ -60,8 +60,14 @@ self.addEventListener('activate', event => {
 self.addEventListener('fetch', event => {
   const url = new URL(event.request.url);
 
+  // JS files → network first pour toujours avoir la dernière version
+  if (url.pathname.endsWith('.js')) {
+    event.respondWith(fetch(event.request));
+    return;
+  }
+
   // API calls → network only (pas de cache)
-  if (url.port === '8000' || url.pathname.startsWith('/api/')) {
+  if (url.hostname.includes('geoapi') || url.port === '8000' || url.pathname.startsWith('/api/')) {
     event.respondWith(fetch(event.request).catch(() =>
       new Response(JSON.stringify({ error: 'offline' }), {
         headers: { 'Content-Type': 'application/json' }
@@ -70,12 +76,19 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  // Assets → cache first, fallback network
+  // Assets → cache first, fallback network (GET uniquement)
+  if (event.request.method !== 'GET') {
+    event.respondWith(fetch(event.request));
+    return;
+  }
+
   event.respondWith(
     caches.match(event.request).then(cached =>
       cached || fetch(event.request).then(response => {
-        const clone = response.clone();
-        caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
+        if (response && response.status === 200) {
+          const clone = response.clone();
+          caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
+        }
         return response;
       })
     )
@@ -95,7 +108,7 @@ async function _flushPendingPoints() {
 
   for (const item of points) {
     try {
-      await fetch(`http://localhost:8000/activities/${item.activityId}/points`, {
+      await fetch(`https://geoapi.laurentjouron.dev/activities/${item.activityId}/points`, {
         method:  'POST',
         headers: {
           'Content-Type':  'application/json',

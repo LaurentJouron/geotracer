@@ -330,7 +330,7 @@ const Tracker = (() => {
   function _showSharePanel() {
     const panel = document.getElementById('sharePanel');
     if (!panel || !_activityId) return;
-    const api = document.getElementById('apiUrl')?.value || 'http://localhost:8000';
+    const api = document.getElementById('apiUrl')?.value || localStorage.getItem('vt_api_url') || 'https://geoapi.laurentjouron.dev';
     const base = window.location.href.replace('tracker.html', 'watch.html').split('?')[0];
     const url  = `${base}?id=${_activityId}&api=${encodeURIComponent(api)}`;
     panel.style.display = 'flex';
