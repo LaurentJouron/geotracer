@@ -6,7 +6,6 @@
     document.documentElement.setAttribute('data-theme', localStorage.getItem('vt_theme') || 'dark');
   </script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <meta name="mobile-web-app-capable" content="yes">
   <meta name="theme-color" content="#080c10">
   <link rel="icon" href="images/favicon.ico">
   <title>GeoTracer — Suivi live</title>
@@ -19,8 +18,8 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
   <!-- QR Code lib -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-   <!-- iOS PWA -->
-  <meta name="apple-mobile-web-app-capable" content="yes">
+  <!-- iOS PWA -->
+  <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="GeoTracer">
   <link rel="apple-touch-icon" href="images/apple-touch-icon.png">
@@ -106,6 +105,17 @@
     </div>
   </div>
 
+
+  <!-- Panel encouragements -->
+  <div class="cheer-panel" id="cheerPanel" style="display:none">
+    <div class="cheer-feed" id="cheerFeed"></div>
+    <div class="cheer-form">
+      <input class="cheer-name-input" id="cheerName" placeholder="Ton prénom" maxlength="30">
+      <input class="cheer-msg-input"  id="cheerMsg"  placeholder="Envoie un encouragement 💬" maxlength="200">
+      <button class="cheer-send-btn" onclick="Watch.sendCheer()">💬</button>
+    </div>
+  </div>
+
   <!-- Sortie terminée -->
   <div class="watch-ended" id="watchEnded">
     <div class="watch-ended-card">
@@ -140,5 +150,6 @@
 </div>
 
 <script src="js/watch.js"></script>
+
 </body>
 </html>

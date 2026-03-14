@@ -154,3 +154,316 @@
         height: 300px;
     }
 }
+
+/* ══════════════════════════════════════════════════════
+   ENCOURAGEMENTS
+══════════════════════════════════════════════════════ */
+
+#cheersSection {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 18px 20px;
+    margin-bottom: 16px;
+}
+
+.cheers-header {
+    font-family: var(--font-head);
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text2);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.cheers-header::before {
+    content: '';
+    width: 3px;
+    height: 14px;
+    border-radius: 2px;
+    background: var(--accent2);
+    flex-shrink: 0;
+}
+.cheers-count {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 400;
+    color: var(--text3);
+    text-transform: none;
+    letter-spacing: 0;
+}
+
+/* ── Liste ── */
+#cheersList { display: flex; flex-direction: column; gap: 8px; }
+.cheers-empty {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--text3);
+    padding: 14px 0;
+    text-align: center;
+}
+
+/* ── Item ── */
+.cheer-detail-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 10px 12px;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    position: relative;
+    transition: border-color 0.2s;
+}
+.cheer-detail-item:hover { border-color: var(--border2); }
+.cheer-detail-item.is-reply {
+    margin-left: 36px;
+    border-left: 2px solid var(--accent2);
+    background: var(--bg2);
+}
+@keyframes cheerSlideIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+.cheer-new {
+    animation: cheerSlideIn 0.3s ease forwards;
+    border-color: var(--accent) !important;
+}
+
+/* ── Avatar ── */
+.cheer-detail-avatar {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent), #0066ff);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-head);
+    font-size: 15px;
+    font-weight: 800;
+    color: #000;
+    flex-shrink: 0;
+}
+
+/* ── Corps ── */
+.cheer-detail-body { flex: 1; min-width: 0; }
+.cheer-detail-name {
+    font-family: var(--font-head);
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 2px;
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+.cheer-detail-time {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--text3);
+    font-weight: 400;
+}
+.cheer-detail-msg {
+    font-size: 13px;
+    color: var(--text2);
+    line-height: 1.5;
+    word-break: break-word;
+    margin-bottom: 4px;
+}
+.cheer-footer { display: flex; gap: 10px; margin-top: 2px; }
+.cheer-reply-btn {
+    background: none;
+    border: none;
+    padding: 0;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--text3);
+    cursor: pointer;
+    letter-spacing: 0.04em;
+    transition: color 0.15s;
+}
+.cheer-reply-btn:hover { color: var(--accent); }
+
+/* ── Menu 3 points ── */
+.cheer-menu-wrap { position: relative; flex-shrink: 0; align-self: flex-start; margin-top: 2px; }
+.cheer-menu-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.15s, background 0.15s;
+}
+.cheer-detail-item:hover .cheer-menu-btn { opacity: 1; }
+@media (hover: none) { .cheer-menu-btn { opacity: 1; } }
+.cheer-menu-btn span {
+    display: block;
+    width: 3px;
+    height: 3px;
+    border-radius: 50%;
+    background: var(--text3);
+    transition: background 0.15s;
+}
+.cheer-menu-btn:hover { background: var(--bg3); }
+.cheer-menu-btn:hover span { background: var(--text); }
+
+.cheer-menu-dropdown {
+    display: none;
+    position: absolute;
+    top: 32px;
+    right: 0;
+    z-index: 200;
+    background: var(--bg2);
+    border: 1px solid var(--border2);
+    border-radius: 8px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+    min-width: 148px;
+    padding: 4px;
+    flex-direction: column;
+}
+.cheer-menu-dropdown.open { display: flex; }
+.cheer-menu-dropdown button {
+    background: none;
+    border: none;
+    padding: 8px 12px;
+    text-align: left;
+    font-family: var(--font-ui);
+    font-size: 12px;
+    color: var(--text2);
+    cursor: pointer;
+    border-radius: 5px;
+    transition: background 0.15s, color 0.15s;
+    white-space: nowrap;
+}
+.cheer-menu-dropdown button:hover { background: var(--bg3); color: var(--text); }
+.cheer-menu-dropdown button.danger { color: var(--red, #ff3355); }
+.cheer-menu-dropdown button.danger:hover { background: rgba(255,51,85,0.1); }
+
+/* ── Formulaire ── */
+.cheers-reply {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+}
+.cheers-reply-context {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 10px;
+    background: rgba(0,212,255,0.06);
+    border: 1px solid rgba(0,212,255,0.2);
+    border-radius: 6px;
+    margin-bottom: 8px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--accent);
+}
+.cheers-reply-cancel {
+    background: none; border: none; color: var(--text3);
+    cursor: pointer; font-size: 13px; padding: 0 2px; line-height: 1;
+    transition: color 0.15s;
+}
+.cheers-reply-cancel:hover { color: var(--text); }
+.cheers-reply-who {
+    display: flex; align-items: center; gap: 8px;
+    margin-bottom: 8px; padding: 6px 10px;
+    background: var(--bg3); border: 1px solid var(--border);
+    border-radius: 6px; width: fit-content;
+}
+.cheers-reply-avatar {
+    width: 24px; height: 24px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent), #0066ff);
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--font-head); font-size: 11px; font-weight: 800; color: #000;
+}
+.cheers-reply-username {
+    font-family: var(--font-head); font-size: 13px; font-weight: 700; color: var(--text);
+}
+.cheers-textarea-row { display: flex; gap: 8px; align-items: flex-end; }
+.cheers-input, .cheers-textarea {
+    background: var(--bg3); border: 1px solid var(--border); border-radius: 6px;
+    padding: 8px 12px; color: var(--text); font-family: var(--font-ui); font-size: 13px;
+    outline: none; transition: border-color 0.2s; resize: none; width: 100%; margin-bottom: 8px;
+}
+.cheers-textarea { margin-bottom: 0; flex: 1; }
+.cheers-input:focus, .cheers-textarea:focus { border-color: var(--accent); }
+.cheers-input::placeholder, .cheers-textarea::placeholder { color: var(--text3); }
+.cheers-send-btn {
+    flex-shrink: 0; width: 38px; height: 38px;
+    background: var(--accent); color: #000; border: none; border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; transition: opacity 0.2s, transform 0.15s;
+}
+.cheers-send-btn:hover  { opacity: 0.85; transform: scale(1.05); }
+.cheers-send-btn:active { transform: scale(0.95); }
+.cheers-send-btn:disabled { opacity: 0.35; cursor: not-allowed; transform: none; }
+
+/* ── Éditeur inline ── */
+.cheer-edit-wrap { display: flex; flex-direction: column; gap: 6px; }
+.cheer-edit-area { width: 100%; font-size: 13px; }
+.cheer-edit-actions { display: flex; gap: 6px; }
+.cheer-edit-save, .cheer-edit-cancel {
+    padding: 4px 10px; border-radius: 5px; border: 1px solid var(--border);
+    font-family: var(--font-mono); font-size: 10px; cursor: pointer; transition: all 0.15s;
+}
+.cheer-edit-save { background: var(--accent); color: #000; border-color: var(--accent); font-weight: 700; }
+.cheer-edit-cancel { background: var(--bg3); color: var(--text3); }
+.cheer-edit-cancel:hover { color: var(--text); border-color: var(--border2); }
+
+/* ── Confirmation suppression inline ── */
+.cheer-delete-confirm {
+    display: flex; align-items: center; gap: 8px; margin-top: 6px;
+    padding: 6px 10px; background: rgba(255,51,85,0.08);
+    border: 1px solid rgba(255,51,85,0.25); border-radius: 6px;
+    font-family: var(--font-mono); font-size: 11px; color: var(--text2); flex-wrap: wrap;
+}
+.cheer-delete-yes, .cheer-delete-no {
+    padding: 3px 10px; border-radius: 4px; border: none;
+    font-family: var(--font-mono); font-size: 11px; cursor: pointer;
+    font-weight: 700; transition: opacity 0.15s;
+}
+.cheer-delete-yes { background: var(--red, #ff3355); color: #fff; }
+.cheer-delete-no  { background: var(--bg3); color: var(--text2); }
+.cheer-delete-yes:hover, .cheer-delete-no:hover { opacity: 0.8; }
+
+/* ── Toast notification ── */
+.cheer-notif-toast {
+    position: fixed; bottom: 88px; left: 50%;
+    transform: translateX(-50%) translateY(16px);
+    opacity: 0; z-index: 9999;
+    background: var(--bg2); border: 1px solid var(--accent); border-radius: 12px;
+    padding: 12px 16px; display: flex; align-items: center; gap: 12px;
+    min-width: 260px; max-width: 90vw;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+    pointer-events: none; transition: opacity 0.3s ease, transform 0.3s ease;
+}
+.cheer-notif-toast--in { opacity: 1; transform: translateX(-50%) translateY(0); }
+.cheer-notif-avatar {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent), #0066ff);
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--font-head); font-size: 16px; font-weight: 800; color: #000; flex-shrink: 0;
+}
+.cheer-notif-name { font-family: var(--font-head); font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 2px; }
+.cheer-notif-msg  { font-size: 12px; color: var(--text2); line-height: 1.4; }
+
+/* ── Responsive ── */
+@media(max-width:640px) {
+    #cheersSection { padding: 14px 16px; }
+    .cheer-detail-item.is-reply { margin-left: 20px; }
+    .cheer-detail-avatar { width: 28px; height: 28px; font-size: 13px; }
+    .cheer-menu-btn { opacity: 1; }
+    .cheer-notif-toast { bottom: 72px; }
+}

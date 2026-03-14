@@ -6,6 +6,7 @@ const Tracker = (() => {
 
   // ── État ──────────────────────────────────────────────
   let _tracking   = false;
+  let _paused     = false;
   let _gpsWatchId = null;
   let _activityId = null;
   let _liveWs     = null;
@@ -14,14 +15,16 @@ const Tracker = (() => {
   let _lastPos    = null;
   let _pointCount = 0;
   let _startTime  = null;
+  let _pausedTime = 0;       // temps cumulé en pause (ms)
+  let _pauseStart = null;    // timestamp début pause
   let _durTimer   = null;
 
   // ── Leaflet ───────────────────────────────────────────
   let _map        = null;
-  let _marker     = null;       // position actuelle
-  let _circle     = null;       // cercle de précision
-  let _polyline   = null;       // tracé parcouru
-  let _latlngs    = [];         // historique des points
+  let _marker     = null;
+  let _circle     = null;
+  let _polyline   = null;
+  let _latlngs    = [];
 
   // ── IndexedDB (offline buffer) ────────────────────────
   let _db = null;
@@ -57,7 +60,6 @@ const Tracker = (() => {
     const tx  = db.transaction('pending_points', 'readwrite');
     const store = tx.objectStore('pending_points');
     const all = await new Promise(res => { const r = store.getAll(); r.onsuccess = e => res(e.target.result); });
-
     for (const item of all) {
       try {
         await Api.addPoint(item.activityId, item.point);
@@ -74,22 +76,16 @@ const Tracker = (() => {
       maxZoom: 19,
     }).addTo(_map);
 
-    // Centrer sur la France par défaut
     _map.setView([46.603354, 1.888334], 6);
 
-    // Tracé GPS
     _polyline = L.polyline([], {
       color: '#00d4ff',
       weight: 4,
       opacity: 0.9,
     }).addTo(_map);
 
-    // Essayer de centrer sur la position actuelle
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(pos => {
-        _map.setView([pos.coords.latitude, pos.coords.longitude], 15);
-      }, () => {}, { timeout: 5000 });
-    }
+    // NE PAS demander le GPS ici — iOS bloque les demandes hors action utilisateur
+    // La géolocalisation est demandée uniquement au tap sur Démarrer
   }
 
   // ── Toggle démarrer / arrêter ─────────────────────────
@@ -97,10 +93,62 @@ const Tracker = (() => {
     _tracking ? _stop() : _start();
   }
 
+  // ── Pause / Reprendre ─────────────────────────────────
+  function togglePause() {
+    if (!_tracking) return;
+    _paused ? _resume() : _pause();
+  }
+
+  function _pause() {
+    _paused = true;
+    _pauseStart = Date.now();
+    if (_gpsWatchId) navigator.geolocation.clearWatch(_gpsWatchId);
+    _gpsWatchId = null;
+    _lastPos = null; // évite un saut de distance au reprise
+    _setUiPaused(true);
+    toast('⏸ Sortie en pause');
+  }
+
+  function _resume() {
+    _paused = false;
+    if (_pauseStart) _pausedTime += Date.now() - _pauseStart;
+    _pauseStart = null;
+    _setUiPaused(false);
+    // Reprendre le GPS
+    _gpsWatchId = navigator.geolocation.watchPosition(
+      _onPosition, _onGpsError,
+      { enableHighAccuracy: true, maximumAge: 1000, timeout: 15000 }
+    );
+    toast('▶ Sortie reprise');
+  }
+
   async function _start() {
     if (!navigator.geolocation) {
       toast('GPS non disponible dans ce navigateur', 'error');
       return;
+    }
+
+    // ── Demander le GPS immédiatement au tap (requis par iOS) ──
+    toast('📡 Acquisition GPS...');
+    try {
+      await new Promise((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(
+          pos => {
+            _map.setView([pos.coords.latitude, pos.coords.longitude], 15);
+            resolve();
+          },
+          err => reject(err),
+          { enableHighAccuracy: true, timeout: 10000 }
+        );
+      });
+    } catch (err) {
+      const msgs = {
+        1: 'Permission GPS refusée — autorise la localisation dans les réglages iPhone',
+        2: 'Position GPS indisponible',
+        3: 'Délai GPS dépassé — réessaie en extérieur',
+      };
+      toast(msgs[err.code] || 'Erreur GPS', 'error');
+      return; // on n'arrête pas si pas de GPS
     }
 
     // Créer la sortie backend
@@ -114,45 +162,50 @@ const Tracker = (() => {
       toast('⚠️ Mode hors ligne — points stockés localement');
     }
 
-    // Wake Lock — empêche l'écran de se mettre en veille
-    try {
-      _wakeLock = await navigator.wakeLock?.request('screen');
-    } catch {}
+    // Wake Lock
+    try { _wakeLock = await navigator.wakeLock?.request('screen'); } catch {}
 
-    // Réinit
-    _tracking = true; _totalDist = 0; _lastPos = null;
-    _pointCount = 0; _startTime = Date.now(); _latlngs = [];
+    // Réinit état
+    _tracking = true; _paused = false;
+    _totalDist = 0; _lastPos = null;
+    _pointCount = 0; _startTime = Date.now();
+    _pausedTime = 0; _pauseStart = null;
+    _latlngs = [];
     _polyline?.setLatLngs([]);
 
     _setUiRunning(true);
+    _setUiPaused(false);
     _showSharePanel();
+    _showCheerFeed(true);
 
-    // Chronomètre
+    // Chronomètre (exclut le temps en pause)
     _durTimer = setInterval(() => {
-      const s = Math.floor((Date.now() - _startTime) / 1000);
+      if (_paused) return;
+      const s = Math.floor((Date.now() - _startTime - _pausedTime) / 1000);
       document.getElementById('liveDur').innerHTML = fmtDurShort(s) + '<span class="unit"></span>';
     }, 1000);
 
     // WebSocket live
     if (_activityId) {
-      try { _liveWs = Api.connectLive(_activityId); } catch {}
+      try {
+        _liveWs = Api.connectLive(_activityId);
+        _liveWs.onmessage = e => {
+          try {
+            const msg = JSON.parse(e.data);
+            if (msg.type === 'cheer') _onCheerReceived(msg.data);
+          } catch {}
+        };
+      } catch {}
     }
 
-    // Enregistrement GPS haute précision
+    // GPS continu
     _gpsWatchId = navigator.geolocation.watchPosition(
-      _onPosition,
-      _onGpsError,
-      {
-        enableHighAccuracy: true,
-        maximumAge: 1000,      // accepte des positions jusqu'à 1s d'ancienneté
-        timeout: 15000,
-      }
+      _onPosition, _onGpsError,
+      { enableHighAccuracy: true, maximumAge: 1000, timeout: 15000 }
     );
 
-    // Flush des points offline en attente
     _flushOffline().catch(() => {});
 
-    // Enregistrement Service Worker
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('/service-worker.js').catch(() => {});
     }
@@ -160,18 +213,20 @@ const Tracker = (() => {
 
   async function _stop() {
     _tracking = false;
+    _paused   = false;
     if (_gpsWatchId) navigator.geolocation.clearWatch(_gpsWatchId);
     if (_liveWs)     _liveWs.close();
     if (_wakeLock)   { _wakeLock.release(); _wakeLock = null; }
     clearInterval(_durTimer);
     _setUiRunning(false);
+    _setUiPaused(false);
     _hideSharePanel();
+    _showCheerFeed(false);
 
     if (_activityId) {
       try {
         await Api.finishActivity(_activityId);
         toast(`🏁 Sortie #${_activityId} enregistrée !`);
-        // Proposer de voir la sortie
         setTimeout(() => {
           if (confirm('Voir le détail de la sortie ?')) {
             sessionStorage.setItem('vt_activity_id', _activityId);
@@ -186,23 +241,21 @@ const Tracker = (() => {
 
   // ── Réception position GPS ────────────────────────────
   function _onPosition(pos) {
+    if (_paused) return; // ignorer les positions pendant la pause
+
     const { latitude: lat, longitude: lon, altitude: alt, speed, accuracy } = pos.coords;
     const spd = speed != null ? speed * 3.6 : null;
 
-    // Précision GPS
     _updateAccuracy(accuracy);
 
-    // Distance cumulée
     if (_lastPos) _totalDist += haversine(_lastPos.lat, _lastPos.lon, lat, lon);
     _lastPos = { lat, lon };
     _pointCount++;
 
-    // ── Mise à jour carte ──
     const latlng = L.latLng(lat, lon);
     _latlngs.push(latlng);
     _polyline.setLatLngs(_latlngs);
 
-    // Marqueur position
     if (!_marker) {
       _marker = L.circleMarker(latlng, {
         radius: 8, color: '#00d4ff', fillColor: '#00d4ff',
@@ -212,7 +265,6 @@ const Tracker = (() => {
       _marker.setLatLng(latlng);
     }
 
-    // Cercle de précision
     if (!_circle) {
       _circle = L.circle(latlng, {
         radius: accuracy, color: '#00d4ff',
@@ -224,17 +276,14 @@ const Tracker = (() => {
       _circle.setRadius(accuracy);
     }
 
-    // Centrer la carte sur la position
     _map.panTo(latlng, { animate: true, duration: 0.5 });
 
-    // ── Métriques ──
     _setMetric('liveSpeed', spd != null ? spd.toFixed(1) : '—', 'km/h');
     _setMetric('liveAlt',   alt != null ? Math.round(alt) : '—', 'm');
     _setMetric('liveDist',  _totalDist.toFixed(2), 'km');
     document.getElementById('livePoints').innerHTML = _pointCount + '<span class="unit">pts</span>';
     document.getElementById('speedFill').style.width = Math.min((spd || 0) / 60 * 100, 100) + '%';
 
-    // ── Envoi backend ──
     const point = { lat, lon, alt, speed_kmh: spd, ts: new Date().toISOString() };
     if (_liveWs?.readyState === WebSocket.OPEN) {
       _liveWs.send(JSON.stringify(point));
@@ -319,11 +368,27 @@ const Tracker = (() => {
   }
 
   function _setUiRunning(on) {
-    const btn   = document.getElementById('startBtn');
-    const badge = document.getElementById('liveBadge');
-    btn.className = on ? 'btn-live stop' : 'btn-live start';
-    btn.innerHTML = on ? '<span>⏹</span> Arrêter' : '<span>▶</span> Démarrer';
-    badge.style.display = on ? 'flex' : 'none';
+    const btn      = document.getElementById('startBtn');
+    const pauseBtn = document.getElementById('pauseBtn');
+    const badge    = document.getElementById('liveBadge');
+    btn.className  = on ? 'btn-live stop' : 'btn-live start';
+    btn.innerHTML  = on ? '<span>⏹</span> Arrêter' : '<span>▶</span> Démarrer';
+    badge.style.display  = on ? 'flex' : 'none';
+    if (pauseBtn) pauseBtn.style.display = on ? 'block' : 'none';
+  }
+
+  function _setUiPaused(paused) {
+    const pauseBtn = document.getElementById('pauseBtn');
+    const badge    = document.getElementById('liveBadge');
+    if (!pauseBtn) return;
+    pauseBtn.className = paused ? 'btn-live resume' : 'btn-live pause';
+    pauseBtn.innerHTML = paused ? '<span>▶</span> Reprendre' : '<span>⏸</span> Pause';
+    if (badge) {
+      badge.textContent = paused ? 'En pause' : 'Live';
+      badge.style.background = paused ? 'rgba(255,214,0,0.15)' : '';
+      badge.style.borderColor = paused ? 'rgba(255,214,0,0.4)' : '';
+      badge.style.color = paused ? 'var(--yellow)' : '';
+    }
   }
 
   // ── Partage ───────────────────────────────────────────
@@ -343,7 +408,65 @@ const Tracker = (() => {
     if (panel) panel.style.display = 'none';
   }
 
-  return { toggle, watchFriend, initMap, toggleFullscreen };
+
+  // ── Encouragements reçus ──────────────────────────────
+  function _onCheerReceived(data) {
+    _addCheerToFeed(data);
+    _showCheerToast(data);
+    // Vibration mobile
+    if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
+    // Notification système
+    if (Notification.permission === 'granted') {
+      new Notification(`💬 ${data.author_name}`, {
+        body: data.message,
+        icon: '/images/apple-touch-icon-180.png',
+        badge: '/images/apple-touch-icon-120.png',
+        silent: false,
+      });
+    }
+  }
+
+  function _addCheerToFeed(data) {
+    const feed = document.getElementById('trackerCheerFeed');
+    if (!feed) return;
+    // Supprimer le message placeholder si présent
+    const placeholder = feed.querySelector('div[style*="italic"]');
+    if (placeholder) placeholder.remove();
+
+    const time = new Date(data.sent_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+    const item = document.createElement('div');
+    item.className = 'tracker-cheer-item';
+    const name = data.author_name.replace(/&/g,'&amp;').replace(/</g,'&lt;');
+    const msg  = data.message.replace(/&/g,'&amp;').replace(/</g,'&lt;');
+    item.innerHTML = `<strong>${name}</strong> : ${msg} <span style="opacity:0.4;font-size:10px">${time}</span>`;
+    feed.appendChild(item);
+    feed.scrollTop = feed.scrollHeight;
+  }
+
+  function _showCheerToast(data) {
+    const el = document.createElement('div');
+    el.style.cssText = `
+      position:fixed;top:80px;left:50%;transform:translateX(-50%);
+      background:rgba(0,212,255,0.15);border:1px solid rgba(0,212,255,0.4);
+      color:#fff;padding:10px 20px;border-radius:12px;font-size:14px;
+      z-index:9999;white-space:nowrap;animation:cheerIn 0.3s ease;
+    `;
+    el.textContent = `💬 ${data.author_name} : ${data.message}`;
+    document.body.appendChild(el);
+    setTimeout(() => el.style.opacity = '0', 3500);
+    setTimeout(() => el.remove(), 4000);
+  }
+
+  function _showCheerFeed(show) {
+    const el = document.getElementById('trackerCheers');
+    if (el) el.style.display = show ? 'block' : 'none';
+    // Demander permission notifications au démarrage
+    if (show && 'Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission();
+    }
+  }
+
+  return { toggle, togglePause, watchFriend, initMap, toggleFullscreen };
 
 })();
 

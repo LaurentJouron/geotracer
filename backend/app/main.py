@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 
-from app.routers import activities, tracking, shares, auth, users
+from app.routers import activities, tracking, shares, auth, users, cheers
 from app.config import settings
 
 
@@ -10,6 +10,7 @@ from app.config import settings
 async def lifespan(app: FastAPI):
     # Startup : initialiser la DB
     from app.database import init_db
+
     await init_db()
     yield
     # Shutdown (rien à faire pour l'instant)
@@ -34,6 +35,7 @@ app.add_middleware(
 # Routers
 app.include_router(activities.router)
 app.include_router(tracking.router)
+app.include_router(cheers.router)
 app.include_router(shares.router)
 app.include_router(auth.router)
 app.include_router(users.router)

@@ -5,11 +5,8 @@
 const Api = (() => {
 
   function baseUrl() {
-    return (
-      document.getElementById('apiUrl')?.value ||
-      localStorage.getItem('vt_api_url') ||
-      'http://localhost:8000'
-    ).replace(/\/$/, '');
+    // Passe toujours par nginx (/api/) — pas de CORS
+    return '/api';
   }
 
   async function request(path, options = {}) {
@@ -100,14 +97,18 @@ const Api = (() => {
   }
 
   // ── WebSockets ───────────────────────────────────────
+  function _wsBase() {
+    const proto = location.protocol === 'https:' ? 'wss' : 'ws';
+    return `${proto}://${location.host}/ws`;
+  }
+
   function connectLive(activityId) {
-    return new WebSocket(baseUrl().replace('http', 'ws') + `/tracking/live/${activityId}`);
+    return new WebSocket(`${_wsBase()}/tracking/live/${activityId}`);
   }
 
   function connectWatch(activityId) {
-    return new WebSocket(baseUrl().replace('http', 'ws') + `/tracking/watch/${activityId}`);
+    return new WebSocket(`${_wsBase()}/tracking/watch/${activityId}`);
   }
-
 
   // ── Partage ───────────────────────────────────────────
   async function createShare(data) {
@@ -130,13 +131,62 @@ const Api = (() => {
     return request(`/shares/${token}`, { method: 'DELETE' });
   }
 
-  return {
-    getActivities, createActivity, addPoint,
-    finishActivity, getActivityStats, getActivityPoints,
-    mapUrl, exportGpxUrl, importGpx,
-    deleteActivity, enrichActivityGpx, getMe,
-    createShare, getShares, resolveShare, revokeShare,
-    connectLive, connectWatch,
+  // ── Encouragements ───────────────────────────────────
+  // Correction 422 : Utilisation de l'objet data direct pour correspondre au Pydantic
+  async function sendCheer(activityId, data) {
+    return request(`/activities/${activityId}/cheers`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async function getCheers(activityId) {
+    return request(`/activities/${activityId}/cheers`);
+  }
+
+  async function updateCheer(cheerId, message) {
+      return request(`/activities/cheers/${cheerId}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ message }),
+      });
+    }
+  
+  async function deleteCheer(cheerId) {
+    return request(`/activities/cheers/${cheerId}`, { method: 'DELETE' });
+  }
+
+  // Modifie sendCheer pour accepter le parent_id
+  async function sendCheer(activityId, data) {
+    return request(`/activities/${activityId}/cheers`, {
+      method: 'POST',
+      body: JSON.stringify(data), // data peut contenir {author_name, message, parent_id}
+    });
+  }
+
+  // Exposition des méthodes
+  return { 
+    sendCheer, 
+    getCheers,
+    getActivities, 
+    createActivity, 
+    addPoint,
+    finishActivity, 
+    getActivityStats, 
+    getActivityPoints,
+    mapUrl, 
+    exportGpxUrl, 
+    importGpx,
+    deleteActivity, 
+    enrichActivityGpx, 
+    getMe,
+    createShare, 
+    getShares, 
+    resolveShare, 
+    revokeShare,
+    connectLive, 
+    connectWatch,
+    updateCheer,
+    deleteCheer,
   };
 
 })();

@@ -9,6 +9,7 @@ const Watch = (() => {
   let _startTs  = null;
   let _durTimer = null;
   let _qr       = null;
+  let _cheerName = '';
 
   // ── Lire les params URL ───────────────────────────────
   function _params() {
@@ -59,6 +60,7 @@ const Watch = (() => {
     _initMap();
     _connect();
     _updateShareUrl();
+    _initCheerPanel();
   }
 
   // ── Carte Leaflet ─────────────────────────────────────
@@ -94,6 +96,10 @@ const Watch = (() => {
       if (msg.type === 'position') {
         const d = msg.data;
         _onPosition(d);
+      }
+
+      if (msg.type === 'cheer') {
+        _onCheerReceived(msg.data);
       }
 
       if (msg.type === 'finished') {
@@ -271,7 +277,103 @@ const Watch = (() => {
     _setStatus('', 'En attente...');
   }
 
-  return { init, start, copyUrl, share, showQr, hideQr, reset };
+
+  // ── Encouragements ───────────────────────────────────
+  function _onCheerReceived(data) {
+    _addCheerToFeed(data);
+    _showCheerToast(data);
+    // Notification système si permission accordée
+    if (Notification.permission === 'granted') {
+      new Notification(`💬 ${data.author_name}`, {
+        body: data.message,
+        icon: '/images/apple-touch-icon-180.png',
+        badge: '/images/apple-touch-icon-120.png',
+        vibrate: [200, 100, 200],
+      });
+    }
+  }
+
+  function _addCheerToFeed(data) {
+    const feed = document.getElementById('cheerFeed');
+    if (!feed) return;
+    const time = new Date(data.sent_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+    const item = document.createElement('div');
+    item.className = 'cheer-item';
+    item.innerHTML = `<strong>${_esc(data.author_name)}</strong> · ${_esc(data.message)} <span style="opacity:0.4;font-size:10px">${time}</span>`;
+    feed.appendChild(item);
+    feed.scrollTop = feed.scrollHeight;
+  }
+
+  function _showCheerToast(data) {
+    const el = document.createElement('div');
+    el.className = 'cheer-toast';
+    el.textContent = `💬 ${data.author_name} : ${data.message}`;
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 4200);
+  }
+
+  function _esc(str) {
+    return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  async function sendCheer() {
+    const nameEl = document.getElementById('cheerName');
+    const msgEl  = document.getElementById('cheerMsg');
+    const name   = nameEl.value.trim();
+    const msg    = msgEl.value.trim();
+
+    if (!name) { nameEl.focus(); return; }
+    if (!msg)  { msgEl.focus();  return; }
+
+    // Mémoriser le prénom
+    _cheerName = name;
+    localStorage.setItem('vt_cheer_name', name);
+
+    // Envoyer via WebSocket si connecté, sinon via API REST
+    const payload = { type: 'cheer', author_name: name, message: msg };
+    if (_ws && _ws.readyState === WebSocket.OPEN) {
+      _ws.send(JSON.stringify(payload));
+      // Afficher localement dans le feed
+      _addCheerToFeed({ author_name: name, message: msg, sent_at: new Date().toISOString() });
+    } else {
+      // Fallback API REST
+      const api = sessionStorage.getItem('vt_watch_api') || 'https://geoapi.laurentjouron.dev';
+      try {
+        await fetch(`${api}/activities/${_actId}/cheers`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ author_name: name, message: msg }),
+        });
+        _addCheerToFeed({ author_name: name, message: msg, sent_at: new Date().toISOString() });
+      } catch {
+        alert('Erreur envoi, vérifie ta connexion');
+        return;
+      }
+    }
+
+    msgEl.value = '';
+  }
+
+  function _initCheerPanel() {
+    const panel = document.getElementById('cheerPanel');
+    if (panel) panel.style.display = 'flex';
+
+    // Pré-remplir le prénom mémorisé
+    const saved = localStorage.getItem('vt_cheer_name');
+    if (saved) document.getElementById('cheerName').value = saved;
+
+    // Demander permission notifications
+    if ('Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission();
+    }
+
+    // Envoyer avec Enter sur le champ message
+    document.getElementById('cheerMsg').addEventListener('keydown', e => {
+      if (e.key === 'Enter') sendCheer();
+    });
+  }
+
+  return { init, start, copyUrl, share, showQr, hideQr, reset, sendCheer };
 
 })();
 

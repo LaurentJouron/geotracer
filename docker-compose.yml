@@ -10,7 +10,7 @@ services:
       POSTGRES_USER: geo
       POSTGRES_PASSWORD: ${DB_PASSWORD}
     volumes:
-      - /volume1/docker/geographix/pgdata:/var/lib/postgresql/data
+      - /volume1/docker/geotracer/pgdata:/var/lib/postgresql/data
     restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U geo -d geographix"]
@@ -26,10 +26,12 @@ services:
   backend:
     build: ./backend
     container_name: geographix_backend
+    env_file:
+      - .env
     environment:
-      DATABASE_URL: postgresql+asyncpg://geo:${DB_PASSWORD}@db:5432/geographix
+      DATABASE_URL: ${DATABASE_URL}
       SECRET_KEY: ${SECRET_KEY}
-      REDIS_URL: redis://redis:6379
+      REDIS_URL: ${REDIS_URL}
     ports:
       - "8000:8000"
     depends_on:
@@ -43,8 +45,10 @@ services:
     image: nginx:alpine
     container_name: geographix_frontend
     volumes:
-      - /volume1/docker/geographix/frontend:/usr/share/nginx/html:ro
-      - /volume1/docker/geographix/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - /volume1/docker/geotracer/frontend:/usr/share/nginx/html:ro
+      - /volume1/docker/geotracer/nginx.conf:/etc/nginx/conf.d/default.conf:ro
     ports:
       - "3000:80"
+    depends_on:
+      - backend
     restart: unless-stopped

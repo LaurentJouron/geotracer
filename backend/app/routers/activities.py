@@ -204,11 +204,22 @@ async def import_gpx(
 
     stats = compute_stats(points)
 
+    def _parse_dt(ts):
+        """Parse un timestamp ISO avec ou sans Z/timezone."""
+        if not ts:
+            return datetime.utcnow()
+        try:
+            return datetime.fromisoformat(ts.replace("Z", "+00:00")).replace(
+                tzinfo=None
+            )
+        except (ValueError, AttributeError):
+            return datetime.utcnow()
+
     activity = Activity(
         user_id=user_id,
         title=metadata.get("title", "Sortie importée"),
-        started_at=datetime.fromisoformat(points[0]["ts"]),
-        finished_at=datetime.fromisoformat(points[-1]["ts"]),
+        started_at=_parse_dt(points[0].get("ts")),
+        finished_at=_parse_dt(points[-1].get("ts")),
         is_live=0,
         raw_points=json.dumps(points),
         distance_km=stats.get("distance_km"),
@@ -312,11 +323,18 @@ async def enrich_activity_gpx(
     # Remplacer les points et recalculer les stats
     activity.raw_points = json.dumps(points)
     activity.is_live = 0
-    activity.finished_at = (
-        datetime.fromisoformat(points[-1]["ts"])
-        if points[-1].get("ts")
-        else datetime.utcnow()
-    )
+
+    def _parse_dt(ts):
+        if not ts:
+            return datetime.utcnow()
+        try:
+            return datetime.fromisoformat(ts.replace("Z", "+00:00")).replace(
+                tzinfo=None
+            )
+        except (ValueError, AttributeError):
+            return datetime.utcnow()
+
+    activity.finished_at = _parse_dt(points[-1].get("ts"))
     activity.distance_km = stats.get("distance_km")
     activity.duration_seconds = stats.get("duration_seconds")
     activity.avg_speed_kmh = stats.get("avg_speed_kmh")

@@ -8,7 +8,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="theme-color" content="#080c10">
   <link rel="icon" href="images/favicon.ico">
-  <title>GeoGraphix — Live</title>
+  <title>GeoTracer — Live</title>
   <link rel="manifest" href="manifest.json">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&family=Exo+2:wght@300;400;600;800&display=swap" rel="stylesheet">
@@ -18,7 +18,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
   <!-- iOS PWA -->
-  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="GeoTracer">
   <link rel="apple-touch-icon" href="images/apple-touch-icon.png">
@@ -90,6 +90,9 @@
           <input class="watch-input" id="watchIdInput" placeholder="ID sortie à suivre (ami)">
           <button class="btn-live start" id="startBtn" onclick="Tracker.toggle()">
             <span>▶</span> Démarrer
+          </button>
+          <button class="btn-live pause" id="pauseBtn" onclick="Tracker.togglePause()" style="display:none">
+            <span>⏸</span> Pause
           </button>
           <button class="btn-live watch" onclick="Tracker.watchFriend()">
             <span>👁</span> Suivre un ami

@@ -2,7 +2,7 @@
  * service-worker.js — Cache offline + Background sync GPS
  */
 
-const CACHE_NAME  = 'geotracer-v13';
+const CACHE_NAME  = 'geotracer-v14';
 const SYNC_TAG    = 'sync-gps-points';
 
 // Fichiers à mettre en cache pour le mode offline
