@@ -40,7 +40,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install --quiet -r backend/requirements.txt
+          pip install --quiet -r backend/requirements-ci.txt
           pip install --quiet pytest pytest-asyncio httpx
 
       - name: Run tests
