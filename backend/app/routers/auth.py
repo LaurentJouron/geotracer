@@ -34,12 +34,14 @@ class TokenResponse(BaseModel):
     token_type: str = "bearer"
     user_id: int
     username: str
+    avatar_url: Optional[str] = None
 
 
 class UserMe(BaseModel):
     id: int
     username: str
     email: str
+    avatar_url: Optional[str] = None
     created_at: datetime
 
     class Config:
@@ -118,6 +120,7 @@ async def register(data: RegisterRequest, db: AsyncSession = Depends(get_db)):
         access_token=create_token(user.id, user.username),
         user_id=user.id,
         username=user.username,
+        avatar_url=user.avatar_url,
     )
 
 
@@ -143,6 +146,7 @@ async def login(
         access_token=create_token(user.id, user.username),
         user_id=user.id,
         username=user.username,
+        avatar_url=user.avatar_url,
     )
 
 
@@ -150,3 +154,86 @@ async def login(
 async def me(current_user: User = Depends(get_current_user)):
     """Profil de l'utilisateur connecté."""
     return current_user
+
+
+@router.patch("/me")
+async def update_me(
+    username: Optional[str] = None,
+    email: Optional[str] = None,
+    password: Optional[str] = None,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Mise à jour du profil (username, email, password)."""
+    if username and username != current_user.username:
+        result = await db.execute(
+            select(User).where(User.username == username)
+        )
+        if result.scalar_one_or_none():
+            raise HTTPException(400, "Nom d'utilisateur déjà pris")
+        current_user.username = username
+
+    if email and email != current_user.email:
+        result = await db.execute(select(User).where(User.email == email))
+        if result.scalar_one_or_none():
+            raise HTTPException(400, "Email déjà utilisé")
+        current_user.email = email
+
+    if password:
+        if len(password) < 8:
+            raise HTTPException(
+                400, "Mot de passe trop court (8 caractères min)"
+            )
+        current_user.hashed_password = hash_password(password)
+
+    await db.commit()
+    await db.refresh(current_user)
+    return {
+        "ok": True,
+        "username": current_user.username,
+        "email": current_user.email,
+    }
+
+
+@router.post("/me/avatar")
+async def upload_avatar(
+    file: "UploadFile" = None,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Upload de la photo de profil.
+    Stockée en base sous forme de data URL base64 (max 2 Mo).
+    """
+    from fastapi import UploadFile
+    import base64
+
+    if not file:
+        raise HTTPException(400, "Aucun fichier fourni")
+
+    content_type = file.content_type or ""
+    if not content_type.startswith("image/"):
+        raise HTTPException(400, "Le fichier doit être une image")
+
+    data = await file.read()
+    if len(data) > 2 * 1024 * 1024:
+        raise HTTPException(400, "Image trop volumineuse (max 2 Mo)")
+
+    b64 = base64.b64encode(data).decode()
+    avatar_url = f"data:{content_type};base64,{b64}"
+
+    current_user.avatar_url = avatar_url
+    await db.commit()
+
+    return {"ok": True, "avatar_url": avatar_url}
+
+
+@router.delete("/me/avatar")
+async def delete_avatar(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Supprime la photo de profil."""
+    current_user.avatar_url = None
+    await db.commit()
+    return {"ok": True}

@@ -7,6 +7,7 @@ Workflow :
   2. Ses amis ouvrent une connexion WS sur /tracking/watch/{activity_id}
      → Ils reçoivent les points en temps réel
 """
+
 import json
 import asyncio
 from typing import Dict, Set
@@ -14,7 +15,7 @@ from datetime import datetime
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 import redis.asyncio as aioredis
 from app.config import settings
-from app.database import AsyncSessionLocal
+from ..database import AsyncSessionLocal
 from app.models.activity import Activity
 
 router = APIRouter(prefix="/tracking", tags=["tracking"])
@@ -53,7 +54,7 @@ async def live_tracking(websocket: WebSocket, activity_id: int):
 
     try:
         while True:
-            raw   = await websocket.receive_text()
+            raw = await websocket.receive_text()
             point = json.loads(raw)
 
             if "ts" not in point:
@@ -74,10 +75,14 @@ async def live_tracking(websocket: WebSocket, activity_id: int):
                 dead = set()
                 for watcher_ws in _watchers[activity_id]:
                     try:
-                        await watcher_ws.send_text(json.dumps({
-                            "type": "position",
-                            "data": point,
-                        }))
+                        await watcher_ws.send_text(
+                            json.dumps(
+                                {
+                                    "type": "position",
+                                    "data": point,
+                                }
+                            )
+                        )
                     except Exception:
                         dead.add(watcher_ws)
                 _watchers[activity_id] -= dead
@@ -90,7 +95,9 @@ async def live_tracking(websocket: WebSocket, activity_id: int):
         if activity_id in _watchers:
             for watcher_ws in _watchers[activity_id]:
                 try:
-                    await watcher_ws.send_text(json.dumps({"type": "finished"}))
+                    await watcher_ws.send_text(
+                        json.dumps({"type": "finished"})
+                    )
                 except Exception:
                     pass
     finally:
@@ -110,30 +117,40 @@ async def watch_activity(websocket: WebSocket, activity_id: int):
     try:
         last = await redis.get(f"activity:{activity_id}:last_point")
         if last:
-            await websocket.send_text(json.dumps({
-                "type": "position",
-                "data": json.loads(last),
-            }))
+            await websocket.send_text(
+                json.dumps(
+                    {
+                        "type": "position",
+                        "data": json.loads(last),
+                    }
+                )
+            )
 
         while True:
             try:
                 # Attendre un message du watcher (cheer) ou timeout ping
-                raw = await asyncio.wait_for(websocket.receive_text(), timeout=30)
+                raw = await asyncio.wait_for(
+                    websocket.receive_text(), timeout=30
+                )
                 msg = json.loads(raw)
                 if msg.get("type") == "cheer":
                     # Sauvegarder et diffuser
                     from app.models.cheer import Cheer
-                    from app.database import AsyncSessionLocal
+                    from backend.app.database import AsyncSessionLocal
+
                     async with AsyncSessionLocal() as db:
                         cheer = Cheer(
                             activity_id=activity_id,
-                            author_name=msg.get("author_name", "Anonyme")[:100],
+                            author_name=msg.get("author_name", "Anonyme")[
+                                :100
+                            ],
                             message=msg.get("message", "")[:500],
                         )
                         db.add(cheer)
                         await db.commit()
                         await db.refresh(cheer)
                     from app.routers.cheers import _broadcast_cheer
+
                     await _broadcast_cheer(activity_id, cheer)
             except asyncio.TimeoutError:
                 await websocket.send_text(json.dumps({"type": "ping"}))
@@ -150,7 +167,7 @@ async def get_active_activities():
     """Retourne les IDs des sorties actuellement en cours (depuis Redis)."""
     redis = await get_redis()
     try:
-        keys       = await redis.keys("activity:*:last_point")
+        keys = await redis.keys("activity:*:last_point")
         active_ids = [int(k.split(":")[1]) for k in keys]
         return {"active_activities": active_ids}
     finally:

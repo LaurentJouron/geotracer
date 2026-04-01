@@ -9,7 +9,7 @@ from app.config import settings
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup : initialiser la DB
-    from app.database import init_db
+    from backend.app.database import init_db
 
     await init_db()
     yield

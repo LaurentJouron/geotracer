@@ -1,135 +1,111 @@
 """
-Router de partage — génère des tokens pour suivre une sortie en temps réel.
+share.py — Liens courts pour partage par SMS
+POST /share/        → crée un token court, retourne l'URL courte
+GET  /share/{token} → redirige vers watch.html avec les bons paramètres
 """
+
 import secrets
-import json
-from datetime import datetime, timedelta
-from typing import Optional
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+import time
+from typing import Dict
+from fastapi import APIRouter, HTTPException
+from fastapi.responses import RedirectResponse, HTMLResponse
 from pydantic import BaseModel
 
-from app.database import get_db
-from app.models.share_token import ShareToken
-from app.models.activity import Activity
+router = APIRouter(prefix="/share", tags=["share"])
 
-router = APIRouter(prefix="/shares", tags=["shares"])
-
-DURATIONS = {
-    "1d":  timedelta(days=1),
-    "3d":  timedelta(days=3),
-    "7d":  timedelta(days=7),
-    "14d": timedelta(days=14),
-    "30d": timedelta(days=30),
-}
+# Stockage en mémoire (tokens valides 24h)
+# En production, utiliser Redis
+_store: Dict[str, dict] = {}
+_TTL = 60 * 60 * 24  # 24 heures
 
 
-class ShareCreate(BaseModel):
-    user_id:     int
-    activity_id: Optional[int] = None   # None = toutes les sorties live
-    label:       Optional[str] = None
-    duration:    str = "7d"             # "1d" | "3d" | "7d" | "14d" | "30d"
+class ShareRequest(BaseModel):
+    activity_id: int
+    username: str = ""
+    api_url: str = "https://geoapi.laurentjouron.dev"
+    frontend_url: str = "https://geographix.laurentjouron.dev"
 
 
 class ShareResponse(BaseModel):
-    id:          int
-    token:       str
-    label:       Optional[str]
-    activity_id: Optional[int]
-    expires_at:  datetime
-    created_at:  datetime
-
-    class Config:
-        from_attributes = True
+    token: str
+    short_url: str
+    watch_url: str
 
 
 @router.post("/", response_model=ShareResponse)
-async def create_share(data: ShareCreate, db: AsyncSession = Depends(get_db)):
-    """Crée un token de partage."""
-    delta = DURATIONS.get(data.duration, timedelta(days=7))
-    share = ShareToken(
-        token       = secrets.token_urlsafe(32),
-        user_id     = data.user_id,
-        activity_id = data.activity_id,
-        label       = data.label or ("Sortie en direct" if data.activity_id else "Suivi live"),
-        expires_at  = datetime.utcnow() + delta,
+async def create_share(data: ShareRequest):
+    """Crée un token court valable 24h pour partager une sortie live."""
+    token = secrets.token_urlsafe(6)  # ~8 caractères, ex: "aB3xKp2"
+
+    _store[token] = {
+        "activity_id": data.activity_id,
+        "username": data.username,
+        "api_url": data.api_url,
+        "frontend_url": data.frontend_url,
+        "created_at": time.time(),
+    }
+
+    short_url = f"{data.api_url}/share/{token}"
+    watch_url = (
+        f"{data.frontend_url}/watch.html"
+        f"?id={data.activity_id}"
+        f"&api={data.api_url}"
+        f"&user={data.username}"
     )
-    db.add(share)
-    await db.commit()
-    await db.refresh(share)
-    return share
+
+    return ShareResponse(token=token, short_url=short_url, watch_url=watch_url)
 
 
 @router.get("/{token}")
-async def resolve_share(token: str, db: AsyncSession = Depends(get_db)):
+async def follow_share(token: str):
     """
-    Résout un token de partage.
-    Retourne l'activité live associée (ou la dernière sortie live de l'utilisateur).
+    Redirige vers watch.html avec les bons paramètres.
+    Ce lien court est celui envoyé par SMS.
     """
-    result = await db.execute(
-        select(ShareToken).where(ShareToken.token == token)
-    )
-    share = result.scalar_one_or_none()
+    entry = _store.get(token)
 
-    if not share:
-        raise HTTPException(404, "Lien de partage introuvable")
-    if share.expires_at < datetime.utcnow():
-        raise HTTPException(410, "Lien de partage expiré")
+    if not entry:
+        raise HTTPException(404, "Lien expiré ou invalide")
 
-    # Résoudre l'activité
-    activity = None
-    if share.activity_id:
-        activity = await db.get(Activity, share.activity_id)
-    else:
-        # Trouver la dernière sortie live de l'utilisateur
-        result = await db.execute(
-            select(Activity)
-            .where(Activity.user_id == share.user_id)
-            .where(Activity.is_live == 1)
-            .order_by(Activity.started_at.desc())
-            .limit(1)
+    # Vérifier expiration
+    if time.time() - entry["created_at"] > _TTL:
+        del _store[token]
+        return HTMLResponse(
+            """
+        <!DOCTYPE html><html><head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1">
+          <title>Lien expiré</title>
+          <style>
+            body { font-family: sans-serif; text-align: center;
+                   padding: 60px 20px; background: #080c10; color: #c8d8e8; }
+            h1 { font-size: 48px; margin-bottom: 12px; }
+            p  { color: #6a8099; }
+          </style>
+        </head><body>
+          <h1>⏱</h1>
+          <h2>Lien expiré</h2>
+          <p>Ce lien de suivi n'est valable que 24 heures.</p>
+        </body></html>
+        """,
+            status_code=410,
         )
-        activity = result.scalar_one_or_none()
 
-    return {
-        "valid":       True,
-        "label":       share.label,
-        "expires_at":  share.expires_at.isoformat(),
-        "user_id":     share.user_id,
-        "activity_id": activity.id if activity else None,
-        "is_live":     activity.is_live if activity else False,
-        "activity":    {
-            "id":           activity.id,
-            "title":        activity.title,
-            "started_at":   activity.started_at.isoformat(),
-            "distance_km":  activity.distance_km,
-            "is_live":      activity.is_live,
-        } if activity else None,
-    }
+    # Construire l'URL watch avec tous les paramètres
+    from urllib.parse import quote
 
-
-@router.get("/user/{user_id}", response_model=list[ShareResponse])
-async def list_shares(user_id: int, db: AsyncSession = Depends(get_db)):
-    """Liste les tokens actifs d'un utilisateur."""
-    result = await db.execute(
-        select(ShareToken)
-        .where(ShareToken.user_id == user_id)
-        .where(ShareToken.expires_at > datetime.utcnow())
-        .order_by(ShareToken.created_at.desc())
+    watch_url = (
+        f"{entry['frontend_url']}/watch.html"
+        f"?id={entry['activity_id']}"
+        f"&api={quote(entry['api_url'], safe='')}"
+        f"&user={quote(entry['username'], safe='')}"
     )
-    return result.scalars().all()
+
+    return RedirectResponse(url=watch_url, status_code=302)
 
 
 @router.delete("/{token}")
-async def revoke_share(token: str, db: AsyncSession = Depends(get_db)):
-    """Révoque un token de partage."""
-    result = await db.execute(
-        select(ShareToken).where(ShareToken.token == token)
-    )
-    share = result.scalar_one_or_none()
-    if not share:
-        raise HTTPException(404, "Token introuvable")
-    await db.delete(share)
-    await db.commit()
-    return {"status": "revoked"}
+async def delete_share(token: str):
+    """Supprime un token (appelé quand la sortie est terminée)."""
+    _store.pop(token, None)
+    return {"deleted": True}
