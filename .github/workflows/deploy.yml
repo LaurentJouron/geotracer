@@ -1,0 +1,81 @@
+name: GeoTracer CI/CD
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  # ─────────────────────────────────────────
+  # JOB 1 — LINT
+  # ─────────────────────────────────────────
+  lint:
+    name: Lint
+    runs-on: self-hosted
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Lint HTML
+        run: |
+          npx --yes htmlhint "frontend/**/*.html" --config .htmlhintrc || true
+
+      - name: Lint Python
+        run: |
+          pip install flake8 --quiet
+          flake8 backend/ --max-line-length=120 --exclude=__pycache__
+
+  # ─────────────────────────────────────────
+  # JOB 2 — TESTS PYTEST
+  # ─────────────────────────────────────────
+  test:
+    name: Tests pytest
+    runs-on: self-hosted
+    needs: lint
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          pip install --quiet -r backend/requirements.txt
+          pip install --quiet pytest pytest-asyncio httpx
+
+      - name: Run tests
+        run: |
+          cd backend
+          pytest tests/ -v --tb=short
+
+  # ─────────────────────────────────────────
+  # JOB 3 — DEPLOY SSH
+  # ─────────────────────────────────────────
+  deploy:
+    name: Deploy sur NAS
+    runs-on: self-hosted
+    needs: test
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.NAS_SSH_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -p ${{ secrets.NAS_SSH_PORT }} ${{ secrets.NAS_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Deploy sur NAS
+        run: |
+          ssh -i ~/.ssh/deploy_key \
+              -p ${{ secrets.NAS_SSH_PORT }} \
+              -o StrictHostKeyChecking=no \
+              ${{ secrets.NAS_USER }}@${{ secrets.NAS_HOST }} \
+              "cd ${{ secrets.NAS_DEPLOY_PATH }} && \
+               docker compose pull && \
+               docker compose up -d --remove-orphans"
+
+      - name: Cleanup SSH key
+        if: always()
+        run: rm -f ~/.ssh/deploy_key

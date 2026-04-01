@@ -209,15 +209,63 @@ const Tracker = (() => {
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('/service-worker.js').catch(() => {});
     }
+
+    // ── Gestion changement d'onglet ────────────────────────
+    document.addEventListener('visibilitychange', _onVisibilityChange);
+  }
+
+  async function _onVisibilityChange() {
+    if (!_tracking || _paused) return;
+
+    if (document.hidden) {
+      // L'onglet passe en arrière-plan
+      // Le GPS watchPosition continue — le navigateur le maintient si permission accordée
+      // On ferme juste le WS proprement pour éviter les erreurs silencieuses
+      if (_liveWs && _liveWs.readyState === WebSocket.OPEN) {
+        _liveWs.close();
+        _liveWs = null;
+      }
+    } else {
+      // L'onglet revient au premier plan
+
+      // Réacquérir le Wake Lock (il est libéré automatiquement en arrière-plan)
+      try { _wakeLock = await navigator.wakeLock?.request('screen'); } catch {}
+
+      // Reconnecter le WebSocket
+      if (_activityId && !_liveWs) {
+        try {
+          _liveWs = Api.connectLive(_activityId);
+          _liveWs.onmessage = e => {
+            try {
+              const msg = JSON.parse(e.data);
+              if (msg.type === 'cheer') _onCheerReceived(msg.data);
+            } catch {}
+          };
+          toast('📡 Reconnecté au suivi live');
+        } catch {}
+      }
+
+      // Vérifier que le GPS est toujours actif — le relancer si besoin
+      if (!_gpsWatchId) {
+        _gpsWatchId = navigator.geolocation.watchPosition(
+          _onPosition, _onGpsError,
+          { enableHighAccuracy: true, maximumAge: 1000, timeout: 15000 }
+        );
+      }
+
+      // Vider le buffer offline si connexion revenue
+      _flushOffline().catch(() => {});
+    }
   }
 
   async function _stop() {
     _tracking = false;
     _paused   = false;
-    if (_gpsWatchId) navigator.geolocation.clearWatch(_gpsWatchId);
-    if (_liveWs)     _liveWs.close();
+    if (_gpsWatchId) { navigator.geolocation.clearWatch(_gpsWatchId); _gpsWatchId = null; }
+    if (_liveWs)     { _liveWs.close(); _liveWs = null; }
     if (_wakeLock)   { _wakeLock.release(); _wakeLock = null; }
     clearInterval(_durTimer);
+    document.removeEventListener('visibilitychange', _onVisibilityChange);
     _setUiRunning(false);
     _setUiPaused(false);
     _hideSharePanel();
@@ -227,6 +275,12 @@ const Tracker = (() => {
       try {
         await Api.finishActivity(_activityId);
         toast(`🏁 Sortie #${_activityId} enregistrée !`);
+        // Supprimer le token de partage
+        if (_shareToken) {
+          const api = document.getElementById('apiUrl')?.value || 'https://geoapi.laurentjouron.dev';
+          fetch(`${api}/share/${_shareToken}`, { method: 'DELETE' }).catch(() => {});
+          _shareToken = null;
+        }
         setTimeout(() => {
           if (confirm('Voir le détail de la sortie ?')) {
             sessionStorage.setItem('vt_activity_id', _activityId);
@@ -392,15 +446,45 @@ const Tracker = (() => {
   }
 
   // ── Partage ───────────────────────────────────────────
-  function _showSharePanel() {
+  let _shareToken = null;
+
+  async function _showSharePanel() {
     const panel = document.getElementById('sharePanel');
     if (!panel || !_activityId) return;
-    const api = document.getElementById('apiUrl')?.value || localStorage.getItem('vt_api_url') || 'https://geoapi.laurentjouron.dev';
-    const base = window.location.href.replace('tracker.html', 'watch.html').split('?')[0];
-    const url  = `${base}?id=${_activityId}&api=${encodeURIComponent(api)}`;
     panel.style.display = 'flex';
-    document.getElementById('sharePanelUrl').textContent = url;
-    document.getElementById('sharePanelUrl').dataset.url = url;
+
+    const api      = document.getElementById('apiUrl')?.value
+                     || localStorage.getItem('vt_api_url')
+                     || 'https://geoapi.laurentjouron.dev';
+    const frontend = window.location.origin;
+    const username = Auth.getUsername() || '';
+
+    // Afficher indicateur pendant génération
+    document.getElementById('sharePanelUrl').textContent = '⏳ Génération du lien...';
+
+    try {
+      const res = await fetch(`${api}/share/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...Auth.authHeaders() },
+        body: JSON.stringify({
+          activity_id:  _activityId,
+          username,
+          api_url:      api,
+          frontend_url: frontend,
+        }),
+      });
+      const data = await res.json();
+      _shareToken = data.token;
+      // URL courte pour SMS : https://geoapi.../share/aB3xKp2
+      document.getElementById('sharePanelUrl').textContent = data.short_url;
+      document.getElementById('sharePanelUrl').dataset.url = data.short_url;
+    } catch {
+      // Fallback lien direct si backend inaccessible
+      const base = window.location.href.replace('tracker.html', 'watch.html').split('?')[0];
+      const url  = `${base}?id=${_activityId}&api=${encodeURIComponent(api)}&user=${encodeURIComponent(username)}`;
+      document.getElementById('sharePanelUrl').textContent = url;
+      document.getElementById('sharePanelUrl').dataset.url = url;
+    }
   }
 
   function _hideSharePanel() {

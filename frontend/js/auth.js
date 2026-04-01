@@ -1,64 +1,64 @@
 /**
- * auth.js — Gestion JWT multi-pages
+ * auth.js - Gestion JWT multi-pages + avatar persistant
  */
 
 const Auth = (() => {
 
-  let _token    = null;
-  let _userId   = null;
-  let _username = null;
+  let _token     = null;
+  let _userId    = null;
+  let _username  = null;
+  let _avatarUrl = null;
 
-  // ── Persistance sessionStorage ────────────────────────
+  // -- Persistance sessionStorage --
   function _save(data) {
-    _token    = data.access_token;
-    _userId   = data.user_id;
-    _username = data.username;
+    _token     = data.access_token;
+    _userId    = data.user_id;
+    _username  = data.username;
+    _avatarUrl = data.avatar_url || null;
     sessionStorage.setItem('vt_token',    _token);
     sessionStorage.setItem('vt_user_id',  String(_userId));
     sessionStorage.setItem('vt_username', _username);
+    if (_avatarUrl) sessionStorage.setItem('vt_avatar_url', _avatarUrl);
+    else            sessionStorage.removeItem('vt_avatar_url');
   }
 
   function _restore() {
-    _token    = sessionStorage.getItem('vt_token');
-    _userId   = parseInt(sessionStorage.getItem('vt_user_id'));
-    _username = sessionStorage.getItem('vt_username');
+    _token     = sessionStorage.getItem('vt_token');
+    _userId    = parseInt(sessionStorage.getItem('vt_user_id'));
+    _username  = sessionStorage.getItem('vt_username');
+    _avatarUrl = sessionStorage.getItem('vt_avatar_url') || null;
   }
 
-  // ── Getters ───────────────────────────────────────────
+  // -- Getters --
   function getToken()    { return _token; }
   function getUserId()   { return _userId; }
   function getUsername() { return _username; }
+  function getAvatar()   { return _avatarUrl; }
   function isLoggedIn()  { return !!_token; }
 
   function authHeaders() {
     return _token ? { 'Authorization': `Bearer ${_token}` } : {};
   }
 
-  // ── Guards ────────────────────────────────────────────
-  /** Appelé sur chaque page protégée — redirige si non connecté */
+  // -- Guards --
   function requireAuth() {
     _restore();
     if (!isLoggedIn()) {
       window.location.href = 'index.html';
       return false;
     }
-    // Afficher le nom dans la topbar
-    const el = document.getElementById('topbarUsername');
-    if (el) el.textContent = _username;
-    // Vérifier le statut API
+    refreshAvatar();
     _checkApi();
     setInterval(_checkApi, 15000);
     return true;
   }
 
-  /** Appelé sur index.html — redirige si déjà connecté */
   function initLoginPage() {
     _restore();
     if (isLoggedIn()) {
       window.location.href = 'dashboard.html';
       return;
     }
-    // Enter sur les champs
     document.getElementById('loginPassword')?.addEventListener('keydown', e => {
       if (e.key === 'Enter') submitLogin();
     });
@@ -67,16 +67,17 @@ const Auth = (() => {
     });
   }
 
-  // ── API calls ─────────────────────────────────────────
+  // -- API URL --
   function _apiUrl() {
     return (
       document.getElementById('apiUrlAuth')?.value ||
       document.getElementById('apiUrl')?.value ||
       localStorage.getItem('vt_api_url') ||
-      'http://localhost:8000'
+      'https://geoapi.laurentjouron.dev'
     ).replace(/\/$/, '');
   }
 
+  // -- Login --
   async function login(username, password) {
     const res = await fetch(`${_apiUrl()}/auth/login`, {
       method: 'POST',
@@ -92,6 +93,7 @@ const Auth = (() => {
     return data;
   }
 
+  // -- Register --
   async function register(username, email, password) {
     const res = await fetch(`${_apiUrl()}/auth/register`, {
       method: 'POST',
@@ -112,7 +114,50 @@ const Auth = (() => {
     window.location.href = 'index.html';
   }
 
-  // ── UI login page ─────────────────────────────────────
+  // -- Upload avatar vers le backend --
+  async function uploadAvatar(file) {
+    const fd = new FormData();
+    fd.append('file', file);
+    const res = await fetch(`${_apiUrl()}/auth/me/avatar`, {
+      method: 'POST',
+      headers: authHeaders(),  // pas de Content-Type : laisse le navigateur setter multipart
+      body: fd,
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || "Erreur upload avatar");
+    }
+    const data = await res.json();
+    _avatarUrl = data.avatar_url;
+    sessionStorage.setItem('vt_avatar_url', _avatarUrl);
+    refreshAvatar();
+    return _avatarUrl;
+  }
+
+  // -- Mise a jour profil --
+  async function updateProfile(username, email, password) {
+    const params = new URLSearchParams();
+    if (username) params.append('username', username);
+    if (email)    params.append('email', email);
+    if (password) params.append('password', password);
+
+    const res = await fetch(`${_apiUrl()}/auth/me?${params.toString()}`, {
+      method: 'PATCH',
+      headers: authHeaders(),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || "Erreur mise a jour profil");
+    }
+    const data = await res.json();
+    if (data.username) {
+      _username = data.username;
+      sessionStorage.setItem('vt_username', _username);
+    }
+    return data;
+  }
+
+  // -- UI login --
   function switchTab(tab) {
     document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
     document.querySelectorAll('.auth-form').forEach(f => f.classList.remove('active'));
@@ -150,7 +195,7 @@ const Auth = (() => {
 
     if (!username || !email || !password) { errEl.textContent = 'Remplis tous les champs'; return; }
     if (password !== confirm) { errEl.textContent = 'Les mots de passe ne correspondent pas'; return; }
-    if (password.length < 8)  { errEl.textContent = 'Mot de passe trop court (8 caractères min)'; return; }
+    if (password.length < 8)  { errEl.textContent = 'Mot de passe trop court (8 caracteres min)'; return; }
 
     btn.textContent = 'Inscription...'; btn.disabled = true;
     try {
@@ -163,7 +208,7 @@ const Auth = (() => {
     }
   }
 
-  // ── Statut API ────────────────────────────────────────
+  // -- Statut API --
   async function _checkApi() {
     const pill = document.getElementById('statusPill');
     if (!pill) return;
@@ -177,25 +222,36 @@ const Auth = (() => {
     }
   }
 
-  // ── Avatar topbar ─────────────────────────────────────
+  // -- Avatar : topbar + page profil --
   function refreshAvatar() {
-    const avatarEl = document.getElementById('topbarAvatar');
-    if (!avatarEl) return;
-    const saved = localStorage.getItem('vt_avatar');
-    if (saved) {
-      avatarEl.innerHTML = `<img src="${saved}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`;
-    } else {
-      const username = getUsername() || '?';
-      avatarEl.textContent = username.charAt(0).toUpperCase();
+    const src = _avatarUrl || null;
+
+    // Topbar avatar
+    const topbarAvatar = document.getElementById('topbarAvatar');
+    if (topbarAvatar) {
+      topbarAvatar.innerHTML = src
+        ? `<img src="${src}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`
+        : (_username || '?').charAt(0).toUpperCase();
     }
+
+    // Page profil
+    const profileAvatar = document.getElementById('profileAvatar');
+    if (profileAvatar) {
+      profileAvatar.innerHTML = src
+        ? `<img src="${src}" style="width:80px;height:80px;border-radius:50%;object-fit:cover">`
+        : (_username || '?').charAt(0).toUpperCase();
+    }
+
+    // Username topbar
     const nameEl = document.getElementById('topbarUsername');
-    if (nameEl) nameEl.textContent = getUsername() || '';
+    if (nameEl) nameEl.textContent = _username || '';
   }
 
   return {
     requireAuth, initLoginPage,
-    getToken, getUserId, getUsername, isLoggedIn, authHeaders,
+    getToken, getUserId, getUsername, getAvatar, isLoggedIn, authHeaders,
     login, register, logout,
+    uploadAvatar, updateProfile,
     switchTab, submitLogin, submitRegister,
     refreshAvatar,
   };

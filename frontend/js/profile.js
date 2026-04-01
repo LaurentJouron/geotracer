@@ -77,24 +77,32 @@ const Profile = (() => {
     }
   }
 
-  // ── Sauvegarde du compte ──────────────────────────────
+  // -- Sauvegarde du compte --
   async function saveAccount() {
     const username = document.getElementById('settingUsername').value.trim();
     const email    = document.getElementById('settingEmail').value.trim();
     const password = document.getElementById('settingPassword').value;
 
-    if (!username) { toast('Le nom d\'utilisateur est requis', 'error'); return; }
+    if (!username) { toast('Le nom utilisateur est requis', 'error'); return; }
 
-    // TODO: appel API PATCH /auth/me quand l'endpoint sera disponible
-    // Pour l'instant on met à jour le sessionStorage
-    sessionStorage.setItem('vt_username', username);
+    const btn = document.getElementById('saveAccountBtn');
+    if (btn) { btn.textContent = 'Enregistrement...'; btn.disabled = true; }
 
-    // Mettre à jour la topbar
-    const el = document.getElementById('topbarUsername');
-    if (el) el.textContent = username;
-
-    document.getElementById('settingPassword').value = '';
-    toast('✅ Profil mis à jour');
+    try {
+      await Auth.updateProfile(
+        username,
+        email,
+        password || undefined,
+      );
+      document.getElementById('settingPassword').value = '';
+      // Rafraichir le nom dans la topbar
+      Auth.refreshAvatar();
+      toast('Profil mis a jour');
+    } catch (e) {
+      toast(e.message || 'Erreur mise a jour', 'error');
+    } finally {
+      if (btn) { btn.textContent = 'Enregistrer'; btn.disabled = false; }
+    }
   }
 
   // ── Zone danger ───────────────────────────────────────
@@ -183,25 +191,25 @@ const Profile = (() => {
     document.getElementById('avatarInput').click();
   }
 
-  function handleAvatar() {
+  async function handleAvatar() {
     const file = document.getElementById('avatarInput').files[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = e => {
-      const base64 = e.target.result;
-      localStorage.setItem('vt_avatar', base64);
-      _applyAvatar();
-      toast('✅ Avatar mis à jour');
-    };
-    reader.readAsDataURL(file);
-  }
 
-  function _applyAvatar() {
-    const avatar = document.getElementById('profileAvatar');
-    if (!avatar) return;
-    const saved = localStorage.getItem('vt_avatar');
-    if (saved) {
-      avatar.innerHTML = `<img src="${saved}" style="width:80px;height:80px;border-radius:50%;object-fit:cover">`;
+    if (!file.type.startsWith('image/')) {
+      toast('Seules les images sont acceptees', 'error');
+      return;
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      toast('Image trop volumineuse (max 2 Mo)', 'error');
+      return;
+    }
+
+    toast('Envoi en cours...');
+    try {
+      await Auth.uploadAvatar(file);
+      toast('Photo de profil mise a jour');
+    } catch (e) {
+      toast(e.message || 'Erreur upload', 'error');
     }
   }
 
